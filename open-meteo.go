@@ -46,6 +46,17 @@ type HourlyUnits struct {
 	WindSpeed200hPa   string `json:"wind_speed_200hPa"`
 }
 
+type Suggestion struct {
+	Name    string  `json:"name"`
+	Country string  `json:"country"`
+	Admin1  string  `json:"admin1"`
+	Admin2  string  `json:"admin2"`
+	Admin3  string  `json:"admin3"`
+	Admin4  string  `json:"admin4"`
+	Lat     float64 `json:"latitude"`
+	Lon     float64 `json:"longitude"`
+}
+
 // FetchData() goes to OpenMeteoEndpoint makes HTTPS request and stores result as OpenMeteoAPIResponse object
 func (response *OpenMeteoAPIResponse) FetchData(apiEndpoint, parameters, lat, lon string) {
 	log.Println("INFO: Making request to Open-Meteo API and parsing response")
@@ -91,6 +102,24 @@ func (response *OpenMeteoAPIResponse) FetchData(apiEndpoint, parameters, lat, lo
 		log.Println("ERROR: cannot Unmarshal JSON", err)
 		return
 	}
+}
+
+func fetchSuggestions(query string) ([]Suggestion, error) {
+	url := fmt.Sprintf("https://geocoding-api.open-meteo.com/v1/search?name=%s", query)
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	var result struct {
+		Results []Suggestion `json:"results"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, err
+	}
+
+	return result.Results, nil
 }
 
 // Points() return DataPoints object based on OpenMeteoAPIResponse fields

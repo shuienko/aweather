@@ -88,8 +88,8 @@ func (dp DataPoints) Print() string {
 			if currentDate != "" {
 				out += "\n"
 			}
-			out += fmt.Sprintf("%27s | %-9s\n", date, dayOfWeek)
-			out += "Hour | Status | Moon  | Low | Mid  | High | Wind | Gusts | Seeing \n"
+			out += fmt.Sprintf("%15s | %-9s\n", date, dayOfWeek)
+			out += " Hour | Status | Moon  | Low | Mid  | High | Wind | Gusts | Seeing \n"
 			out += "-----|--------|-------|-----|------|------|------|-------|-------\n"
 			currentDate = date
 		}
@@ -99,7 +99,7 @@ func (dp DataPoints) Print() string {
 			status = "Good"
 		}
 
-		out += fmt.Sprintf("%02d   | %6s | %3d%%  | %3d | %3d  | %3d  | %4.1f | %4.1f  | %3.1f \n",
+		out += fmt.Sprintf("%02d | %6s | %3d%%  | %3d | %3d  | %3d  | %4.1f | %4.1f  | %3.1f \n",
 			point.Time.Hour(), status, point.MoonIllum, point.LowClouds, point.MidClouds, point.HighClouds, point.WindSpeed, point.WindGusts, point.Seeing)
 	}
 

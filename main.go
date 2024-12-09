@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"log"
 	"net/http"
 )
 
@@ -11,12 +11,10 @@ const (
 )
 
 func main() {
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		data := OpenMeteoAPIResponse{}
-		data.FetchData(OpenMeteoAPIEndpoint, OpenMeteoAPIParams, "36.0", "5.0")
-		table := data.Points().setMoonIllumination().setSeeing().Print()
-		fmt.Fprintf(w, "<html><body><pre>%s</pre></body></html>", table)
-	})
+	http.HandleFunc("/", handleIndex)
+	http.HandleFunc("/weather", handleWeather)
+	http.HandleFunc("/suggestions", handleSuggestions)
 
-	http.ListenAndServe(":8080", nil)
+	log.Println("Server is running at http://localhost:8080")
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }
