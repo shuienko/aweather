@@ -88,7 +88,7 @@ func (dp DataPoints) Print() string {
 			if currentDate != "" {
 				out += "\n"
 			}
-			out += fmt.Sprintf("%15s | %-9s\n", date, dayOfWeek)
+			out += fmt.Sprintf("%8s | %-9s\n", date, dayOfWeek)
 			out += " Hour | Status | Moon  | Low | Mid  | High | Wind | Gusts | Seeing \n"
 			out += "-----|--------|-------|-----|------|------|------|-------|-------\n"
 			currentDate = date

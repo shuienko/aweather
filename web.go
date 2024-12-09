@@ -27,7 +27,13 @@ const indexHTML = `
             font-size: 1.2rem;
             font-weight: bold;
         }
+		.forecast-table-container {
+    		overflow-x: auto;
+    		white-space: nowrap;
+			text-align: center;
+		}
         .forecast-table {
+			display: inline-block;
             border: none;
 			text-align: center;
             box-shadow: none;
@@ -42,7 +48,7 @@ const indexHTML = `
 </head>
 <body>
     <div class="uk-container uk-margin-top">
-        <h1 class="uk-heading-divider forecast-header">Minimalist Weather Forecast for Astrophotographers</h1>
+        <h1 class="uk-heading-divider forecast-header">Weather Forecast for Astrophotographers</h1>
         
         <div class="uk-grid-small uk-flex-middle" uk-grid>
             <div class="uk-width-expand">
@@ -60,10 +66,12 @@ const indexHTML = `
 
         <div id="forecastDetails" class="forecast-details" style="display: none;"></div>
 
-        <pre id="weatherResult" class="uk-margin-top forecast-table"></pre>
+		<div class="forecast-table-container">
+	        <pre id="weatherResult" class="uk-margin-top forecast-table"></pre>
+		</div>
 
         <div class="footer">
-            (c) aweather.info
+            © aweather.info
         </div>
     </div>
 
@@ -123,10 +131,12 @@ const indexHTML = `
             }
 
             const cityName = document.getElementById('city').value;
+			const shortName = cityName.split(',')[0].trim();
+			const country = cityName.split(',')[1].trim();
 
             // Display forecast details
             const forecastDetails = document.getElementById('forecastDetails');
-            forecastDetails.textContent = cityName + "  |  lat: " + latitude + ", lon: " + longitude;
+            forecastDetails.textContent = shortName + ", " + country + "  |  lat: " + latitude + ", lon: " + longitude;
             forecastDetails.style.display = 'block';
 
             // Fetch weather data
@@ -154,8 +164,6 @@ func handleWeather(w http.ResponseWriter, r *http.Request) {
 	if lat == "" || lon == "" {
 		http.Error(w, "Latitude and longitude are required", http.StatusBadRequest)
 		return
-	} else {
-		fmt.Println("Latitude: ", lat, "Longitude: ", lon)
 	}
 
 	latitude, err1 := strconv.ParseFloat(lat, 64)
