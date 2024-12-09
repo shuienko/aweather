@@ -105,7 +105,7 @@ func (response *OpenMeteoAPIResponse) FetchData(apiEndpoint, parameters, lat, lo
 }
 
 func fetchSuggestions(query string) ([]Suggestion, error) {
-	url := fmt.Sprintf("https://geocoding-api.open-meteo.com/v1/search?name=%s", query)
+	url := fmt.Sprintf("%s?name=%s", OpenMeteoGeoAPIEndpoint, query)
 	resp, err := http.Get(url)
 	if err != nil {
 		return nil, err

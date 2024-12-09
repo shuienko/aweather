@@ -7,10 +7,6 @@ import (
 	"net/url"
 )
 
-const (
-	openMeteoGeoAPIEndpoint = "https://geocoding-api.open-meteo.com/v1/search"
-)
-
 type GeocodingResponse struct {
 	Results []struct {
 		Latitude  float64 `json:"latitude"`
@@ -25,7 +21,7 @@ type GeocodingResponse struct {
 }
 
 func getSuggestions(query string) ([]string, error) {
-	apiURL := fmt.Sprintf("%s?name=%s", openMeteoGeoAPIEndpoint, url.QueryEscape(query))
+	apiURL := fmt.Sprintf("%s?name=%s", OpenMeteoGeoAPIEndpoint, url.QueryEscape(query))
 	resp, err := http.Get(apiURL)
 	if err != nil {
 		return nil, err
@@ -46,7 +42,7 @@ func getSuggestions(query string) ([]string, error) {
 
 func getCoordinates(location string) (float64, float64, error) {
 	query := url.QueryEscape(location)
-	apiURL := fmt.Sprintf("%s?name=%s", openMeteoGeoAPIEndpoint, query)
+	apiURL := fmt.Sprintf("%s?name=%s", OpenMeteoGeoAPIEndpoint, query)
 
 	resp, err := http.Get(apiURL)
 	if err != nil {

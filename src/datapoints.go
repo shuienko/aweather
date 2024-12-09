@@ -95,7 +95,7 @@ func (dp DataPoints) Print() string {
 		}
 
 		status := "Bad"
-		if point.isGood(25, 20) {
+		if point.isGood(MaxCloudCover, MaxWindSpeed) {
 			status = "Good"
 		}
 
