@@ -72,7 +72,7 @@ const indexHTML = `
         
         <div class="uk-grid-small uk-flex-middle" uk-grid>
             <div class="uk-width-expand">
-                <input class="uk-input" id="city" type="text" placeholder="e.g., London" oninput="fetchSuggestions(this.value)">
+                <input class="uk-input" id="city" type="text" placeholder="e.g., London" value="%s" oninput="fetchSuggestions(this.value)">
                 <ul id="suggestions" class="uk-list uk-list-divider" style="position: absolute; z-index: 1000; background: white; display: none;"></ul>
             </div>
             <div>
@@ -81,8 +81,8 @@ const indexHTML = `
         </div>
 
         <!-- Hidden fields to store latitude and longitude -->
-        <input type="hidden" id="latitude" value="">
-        <input type="hidden" id="longitude" value="">
+        <input type="hidden" id="latitude" value="%s">
+        <input type="hidden" id="longitude" value="%s">
 
         <div id="forecastDetails" class="forecast-details" style="display: none;"></div>
 
@@ -182,38 +182,103 @@ Just cloud cover and wind speed. And a clear status Good/Bad. From my experience
         }
 
         function fetchWeather() {
-            const latitude = document.getElementById('latitude').value;
-            const longitude = document.getElementById('longitude').value;
+            const cityNameInput = document.getElementById("city");
+            const latitudeInput = document.getElementById("latitude");
+            const longitudeInput = document.getElementById("longitude");
+
+            const cityName = cityNameInput.value;
+            const latitude = latitudeInput.value;
+            const longitude = longitudeInput.value;
 
             if (!latitude || !longitude || isNaN(latitude) || isNaN(longitude)) {
-                return alert('Please select a valid suggestion from the list');
+                return alert("Please select a valid suggestion from the list");
             }
 
-            const cityName = document.getElementById('city').value;
-			const shortName = cityName.split(',')[0].trim();
-			const country = cityName.split(',').slice(-1)[0].trim();
+            // Save city name, latitude, and longitude in cookies (encoded)
+            document.cookie = "cityName=" + encodeURIComponent(cityName) + "; path=/";
+            document.cookie = "latitude=" + encodeURIComponent(latitude) + "; path=/";
+            document.cookie = "longitude=" + encodeURIComponent(longitude) + "; path=/";
+
+            const shortName = cityName.split(",")[0].trim();
+            const country = cityName.split(",").slice(-1)[0].trim();
 
             // Display forecast details
-            const forecastDetails = document.getElementById('forecastDetails');
+            const forecastDetails = document.getElementById("forecastDetails");
             forecastDetails.textContent = shortName + ", " + country + "  |  lat: " + latitude + ", lon: " + longitude;
-            forecastDetails.style.display = 'block';
+            forecastDetails.style.display = "block";
 
-            // Fetch weather data
-            fetch('/weather?lat=' + encodeURIComponent(latitude) + '&lon=' + encodeURIComponent(longitude))
-                .then(response => response.text())
-                .then(data => {
-                    document.getElementById('weatherResult').textContent = data;
+            // Fetch weather data from the backend
+            fetch("/weather?lat=" + encodeURIComponent(latitude) + "&lon=" + encodeURIComponent(longitude))
+                .then(function (response) {
+                    if (!response.ok) {
+                        throw new Error("Error fetching weather data: " + response.statusText);
+                    }
+                    return response.text();
                 })
-                .catch(console.error);
+                .then(function (data) {
+                    document.getElementById("weatherResult").textContent = data;
+                })
+                .catch(function (error) {
+                    console.error(error);
+                    alert("Failed to fetch weather data. Please try again later.");
+                });
         }
+        // Decode cookie values and populate the input fields
+        function loadCookies() {
+            const cookies = document.cookie.split("; ");
+            const cookieMap = {};
+            cookies.forEach(cookie => {
+                const [key, value] = cookie.split("=");
+                cookieMap[key] = decodeURIComponent(value);
+            });
+
+            // Populate fields if cookies exist
+            const cityNameInput = document.getElementById("city");
+            const latitudeInput = document.getElementById("latitude");
+            const longitudeInput = document.getElementById("longitude");
+
+            if (cookieMap.cityName) {
+                cityNameInput.value = cookieMap.cityName;
+            }
+            if (cookieMap.latitude) {
+                latitudeInput.value = cookieMap.latitude;
+            }
+            if (cookieMap.longitude) {
+                longitudeInput.value = cookieMap.longitude;
+            }
+        }
+    document.addEventListener("DOMContentLoaded", loadCookies);
     </script>
 </body>
 </html>
 `
 
 func handleIndex(w http.ResponseWriter, r *http.Request) {
+	// Retrieve cookies
+	cityNameCookie, _ := r.Cookie("cityName")
+	latCookie, _ := r.Cookie("latitude")
+	lonCookie, _ := r.Cookie("longitude")
+
+	cityName := ""
+	latitude := ""
+	longitude := ""
+
+	// Set defaults if cookies exist
+	if cityNameCookie != nil {
+		cityName = cityNameCookie.Value
+	}
+	if latCookie != nil {
+		latitude = latCookie.Value
+	}
+	if lonCookie != nil {
+		longitude = lonCookie.Value
+	}
+
+	// Insert cookies into JavaScript for the frontend
+	pageWithCookies := fmt.Sprintf(indexHTML, cityName, latitude, longitude)
+
 	w.Header().Set("Content-Type", "text/html")
-	fmt.Fprint(w, indexHTML)
+	fmt.Fprint(w, pageWithCookies)
 }
 
 func handleWeather(w http.ResponseWriter, r *http.Request) {
@@ -251,6 +316,28 @@ func handleSuggestions(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, "Unable to fetch suggestions", http.StatusInternalServerError)
 		return
+	}
+
+	// If a suggestion is selected, save it in cookies
+	if len(suggestions) > 0 {
+		selected := suggestions[0] // Assuming the first result is selected by default
+
+		// Save cookies for city name, latitude, and longitude
+		http.SetCookie(w, &http.Cookie{
+			Name:  "cityName",
+			Value: selected.Name,
+			Path:  "/",
+		})
+		http.SetCookie(w, &http.Cookie{
+			Name:  "latitude",
+			Value: fmt.Sprintf("%f", selected.Lat),
+			Path:  "/",
+		})
+		http.SetCookie(w, &http.Cookie{
+			Name:  "longitude",
+			Value: fmt.Sprintf("%f", selected.Lon),
+			Path:  "/",
+		})
 	}
 
 	w.Header().Set("Content-Type", "application/json")
