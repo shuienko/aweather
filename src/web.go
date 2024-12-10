@@ -119,7 +119,7 @@ Just cloud cover and wind speed. And a clear status Good/Bad. From my experience
 -> All information comes from <a href="https://open-meteo.com/">Open-Meteo.com</a> API.
 -> Source code is available on <a href="https://github.com/shuienko/aweather.info">GitHub</a>. Pull requests are welcome.
 -> For any questions, suggestions or feedback please contact me via email: <b>contact@aweather.info</b>
--> My <a href="https://www.astrobin.com/users/maffei/">Astrobin</a> profile.
+-> My <a href="https://www.astrobin.com/users/maffei/">Astrobin</a> profile. Don't judge! I have feelings too :)
 -> And if you like this page, please consider supporting me using the button below. Thank you!
             </pre>
         </div>
