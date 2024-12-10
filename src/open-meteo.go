@@ -59,67 +59,99 @@ type Suggestion struct {
 
 // FetchData() goes to OpenMeteoEndpoint makes HTTPS request and stores result as OpenMeteoAPIResponse object
 func (response *OpenMeteoAPIResponse) FetchData(apiEndpoint, parameters, lat, lon string) {
-	log.Println("INFO: Making request to Open-Meteo API and parsing response")
-	client := &http.Client{}
+	latlon := lat + lon
+	weatherData, err := cache.Get(latlon)
 
-	// Set paramenters
-	params := url.Values{}
-	params.Add("latitude", lat)
-	params.Add("longitude", lon)
-	params.Add("hourly", parameters)
-
-	// Make request to Open-Meteo API
-	req, err := http.NewRequest("GET", apiEndpoint+params.Encode(), nil)
 	if err != nil {
-		log.Println("ERROR: Couldn't create new Open-Meteo API request", err)
-		return
-	}
+		log.Println("INFO: Making request to Open-Meteo API and parsing response")
+		client := &http.Client{}
 
-	parseFormErr := req.ParseForm()
-	if parseFormErr != nil {
-		log.Println(parseFormErr)
-		return
-	}
+		// Set paramenters
+		params := url.Values{}
+		params.Add("latitude", lat)
+		params.Add("longitude", lon)
+		params.Add("hourly", parameters)
 
-	resp, err := client.Do(req)
-	if err != nil {
-		log.Println("ERROR:", err)
-		return
-	}
+		// Make request to Open-Meteo API
+		req, err := http.NewRequest("GET", apiEndpoint+params.Encode(), nil)
+		if err != nil {
+			log.Println("ERROR: Couldn't create new Open-Meteo API request", err)
+			return
+		}
 
-	// Read Response Body
-	if resp.StatusCode != 200 {
-		fmt.Println("ERROR: Open-Meteo API response code:", resp.Status)
-		return
-	}
+		parseFormErr := req.ParseForm()
+		if parseFormErr != nil {
+			log.Println(parseFormErr)
+			return
+		}
 
-	log.Println("INFO: Got API response", resp.Status)
-	respBody, _ := io.ReadAll(resp.Body)
+		resp, err := client.Do(req)
+		if err != nil {
+			log.Println("ERROR:", err)
+			return
+		}
+
+		// Read Response Body
+		if resp.StatusCode != 200 {
+			fmt.Println("ERROR: Open-Meteo API response code:", resp.Status)
+			return
+		}
+
+		log.Println("INFO: Got API response", resp.Status)
+		weatherData, _ = io.ReadAll(resp.Body)
+
+		// Save response to cache
+		cache.Set(latlon, weatherData)
+	} else {
+		log.Println("INFO: Using cached data for latlon", latlon)
+	}
 
 	// Save response as OpenMeteoAPIResponse object
-	err = json.Unmarshal(respBody, response)
+	err = json.Unmarshal(weatherData, response)
 	if err != nil {
 		log.Println("ERROR: cannot Unmarshal JSON", err)
 		return
 	}
+
 }
 
+// fetchSuggestions() makes request to OpenMeteoGeoAPI and returns Suggestion object
 func fetchSuggestions(query string) ([]Suggestion, error) {
-	url := fmt.Sprintf("%s?name=%s", OpenMeteoGeoAPIEndpoint, query)
-	resp, err := http.Get(url)
+	// Check if query is in cache
+	resultByte, err := cache.Get(query)
+
+	// If not in cache, make request to OpenMeteoGeoAPI
 	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
+		url := fmt.Sprintf("%s?name=%s", OpenMeteoGeoAPIEndpoint, query)
+		resp, err := http.Get(url)
+		if err != nil {
+			return nil, err
+		}
+		defer resp.Body.Close()
 
-	var result struct {
-		Results []Suggestion `json:"results"`
-	}
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return nil, err
-	}
+		var result struct {
+			Results []Suggestion `json:"results"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return nil, err
+		}
 
-	return result.Results, nil
+		// Save response to cache
+		jsonData, _ := json.Marshal(result.Results)
+		cache.Set(query, jsonData)
+
+		// Return results
+		return result.Results, nil
+	} else {
+		log.Println("INFO: Using cached data for query", query)
+
+		// Unmarshal cached data
+		result := []Suggestion{}
+		json.Unmarshal(resultByte, &result)
+
+		// Return results
+		return result, nil
+	}
 }
 
 // Points() return DataPoints object based on OpenMeteoAPIResponse fields
