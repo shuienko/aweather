@@ -2,8 +2,8 @@ FROM golang:1.23.4-alpine AS build
 
 WORKDIR /usr/src/app
 
-# Copy go.mod for dependency management
-COPY src/go.mod ./
+# Copy go.mod and go.sum for dependency management
+COPY src/go.mod src/go.sum ./
 RUN go mod download && go mod verify
 
 # Copy the entire source directory structure (not just files)
