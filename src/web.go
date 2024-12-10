@@ -135,119 +135,131 @@ Just cloud cover and wind speed. And a clear status Good/Bad. From my experience
     </div>
 
     <script>
-        function fetchSuggestions(query) {
-            if (query.length < 2) {
-                document.getElementById('suggestions').style.display = 'none';
-                return;
-            }
-            fetch('/suggestions?q=' + encodeURIComponent(query))
-                .then(response => response.json())
-                .then(data => {
-                    const suggestions = document.getElementById('suggestions');
-                    suggestions.innerHTML = '';
-                    if (data.length > 0) {
-                        suggestions.style.display = 'block';
-                        data.forEach(function(item) {
-                            const regions = [item.admin1, item.admin2, item.admin3, item.admin4]
-                                .filter(function(region) {
-                                    return region && region.trim().length > 0;
-                                })
-                                .join(', ');
-                            const fullName = item.name + (regions ? ', ' + regions : '') + ', ' + item.country;
+    function fetchSuggestions(query) {
+        if (query.length < 2) {
+            document.getElementById('suggestions').style.display = 'none';
+            return;
+        }
+        fetch('/suggestions?q=' + encodeURIComponent(query))
+            .then(response => response.json())
+            .then(data => {
+                const suggestions = document.getElementById('suggestions');
+                suggestions.innerHTML = '';
+                if (data.length > 0) {
+                    suggestions.style.display = 'block';
+                    data.forEach(function(item) {
+                        const regions = [item.admin1, item.admin2, item.admin3, item.admin4]
+                            .filter(function(region) {
+                                return region && region.trim().length > 0;
+                            })
+                            .join(', ');
+                        const fullName = item.name + (regions ? ', ' + regions : '') + ', ' + item.country;
 
-                            const li = document.createElement('li');
-                            li.textContent = fullName;
-                            li.onclick = function() {
-                                document.getElementById('city').value = fullName;
+                        const li = document.createElement('li');
+                        li.textContent = fullName;
+                        li.onclick = function() {
+                            document.getElementById('city').value = fullName;
 
-                                // Ensure the latitude and longitude inputs exist and set their values
-                                const latitudeInput = document.getElementById('latitude');
-                                const longitudeInput = document.getElementById('longitude');
-                                if (latitudeInput && longitudeInput) {
-                                    latitudeInput.value = item.latitude;
-                                    longitudeInput.value = item.longitude;
-                                } else {
-                                    console.error("Latitude or longitude input not found in the DOM.");
-                                }
+                            // Ensure the latitude and longitude inputs exist and set their values
+                            const latitudeInput = document.getElementById('latitude');
+                            const longitudeInput = document.getElementById('longitude');
+                            if (latitudeInput && longitudeInput) {
+                                latitudeInput.value = item.latitude;
+                                longitudeInput.value = item.longitude;
+                            } else {
+                                console.error("Latitude or longitude input not found in the DOM.");
+                            }
 
-                                suggestions.style.display = 'none';
-                            };
-                            suggestions.appendChild(li);
-                        });
-                    } else {
-                        suggestions.style.display = 'none';
-                    }
-                })
-                .catch(console.error);
+                            suggestions.style.display = 'none';
+                        };
+                        suggestions.appendChild(li);
+                    });
+                } else {
+                    suggestions.style.display = 'none';
+                }
+            })
+            .catch(console.error);
+    }
+
+    function fetchWeather() {
+        const cityNameInput = document.getElementById("city");
+        const latitudeInput = document.getElementById("latitude");
+        const longitudeInput = document.getElementById("longitude");
+
+        const cityName = cityNameInput.value;
+        const latitude = latitudeInput.value;
+        const longitude = longitudeInput.value;
+
+        if (!latitude || !longitude || isNaN(latitude) || isNaN(longitude)) {
+            return alert("Please select a valid suggestion from the list");
         }
 
-        function fetchWeather() {
-            const cityNameInput = document.getElementById("city");
-            const latitudeInput = document.getElementById("latitude");
-            const longitudeInput = document.getElementById("longitude");
+        // Save city name, latitude, and longitude in cookies (encoded)
+        document.cookie = "cityName=" + encodeURIComponent(cityName) + "; path=/";
+        document.cookie = "latitude=" + encodeURIComponent(latitude) + "; path=/";
+        document.cookie = "longitude=" + encodeURIComponent(longitude) + "; path=/";
 
-            const cityName = cityNameInput.value;
-            const latitude = latitudeInput.value;
-            const longitude = longitudeInput.value;
+        const shortName = cityName.split(",")[0].trim();
+        const country = cityName.split(",").slice(-1)[0].trim();
 
-            if (!latitude || !longitude || isNaN(latitude) || isNaN(longitude)) {
-                return alert("Please select a valid suggestion from the list");
-            }
+        // Display forecast details
+        const forecastDetails = document.getElementById("forecastDetails");
+        forecastDetails.textContent = shortName + ", " + country + "  |  lat: " + latitude + ", lon: " + longitude;
+        forecastDetails.style.display = "block";
 
-            // Save city name, latitude, and longitude in cookies (encoded)
-            document.cookie = "cityName=" + encodeURIComponent(cityName) + "; path=/";
-            document.cookie = "latitude=" + encodeURIComponent(latitude) + "; path=/";
-            document.cookie = "longitude=" + encodeURIComponent(longitude) + "; path=/";
-
-            const shortName = cityName.split(",")[0].trim();
-            const country = cityName.split(",").slice(-1)[0].trim();
-
-            // Display forecast details
-            const forecastDetails = document.getElementById("forecastDetails");
-            forecastDetails.textContent = shortName + ", " + country + "  |  lat: " + latitude + ", lon: " + longitude;
-            forecastDetails.style.display = "block";
-
-            // Fetch weather data from the backend
-            fetch("/weather?lat=" + encodeURIComponent(latitude) + "&lon=" + encodeURIComponent(longitude))
-                .then(function (response) {
-                    if (!response.ok) {
-                        throw new Error("Error fetching weather data: " + response.statusText);
-                    }
-                    return response.text();
-                })
-                .then(function (data) {
-                    document.getElementById("weatherResult").textContent = data;
-                })
-                .catch(function (error) {
-                    console.error(error);
-                    alert("Failed to fetch weather data. Please try again later.");
-                });
-        }
-        // Decode cookie values and populate the input fields
-        function loadCookies() {
-            const cookies = document.cookie.split("; ");
-            const cookieMap = {};
-            cookies.forEach(cookie => {
-                const [key, value] = cookie.split("=");
-                cookieMap[key] = decodeURIComponent(value);
+        // Fetch weather data from the backend
+        fetch("/weather?lat=" + encodeURIComponent(latitude) + "&lon=" + encodeURIComponent(longitude))
+            .then(function (response) {
+                if (!response.ok) {
+                    throw new Error("Error fetching weather data: " + response.statusText);
+                }
+                return response.text();
+            })
+            .then(function (data) {
+                document.getElementById("weatherResult").textContent = data;
+            })
+            .catch(function (error) {
+                console.error(error);
+                alert("Failed to fetch weather data. Please try again later.");
             });
+    }
 
-            // Populate fields if cookies exist
-            const cityNameInput = document.getElementById("city");
-            const latitudeInput = document.getElementById("latitude");
-            const longitudeInput = document.getElementById("longitude");
+    // Decode cookie values and populate the input fields
+    function loadCookies() {
+        const cookies = document.cookie.split("; ");
+        const cookieMap = {};
+        cookies.forEach(cookie => {
+            const [key, value] = cookie.split("=");
+            cookieMap[key] = decodeURIComponent(value);
+        });
 
-            if (cookieMap.cityName) {
-                cityNameInput.value = cookieMap.cityName;
-            }
-            if (cookieMap.latitude) {
-                latitudeInput.value = cookieMap.latitude;
-            }
-            if (cookieMap.longitude) {
-                longitudeInput.value = cookieMap.longitude;
-            }
+        // Populate fields if cookies exist
+        const cityNameInput = document.getElementById("city");
+        const latitudeInput = document.getElementById("latitude");
+        const longitudeInput = document.getElementById("longitude");
+
+        if (cookieMap.cityName) {
+            cityNameInput.value = cookieMap.cityName;
         }
-    document.addEventListener("DOMContentLoaded", loadCookies);
+        if (cookieMap.latitude) {
+            latitudeInput.value = cookieMap.latitude;
+        }
+        if (cookieMap.longitude) {
+            longitudeInput.value = cookieMap.longitude;
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        loadCookies();
+
+        // Add keypress listener to execute fetchWeather on Enter key press
+        document.getElementById("city").addEventListener("keypress", function (event) {
+            if (event.key === "Enter") {
+                event.preventDefault(); // Prevent default form submission
+                fetchWeather(); // Call the fetchWeather function
+            }
+        });
+    });
     </script>
 </body>
 </html>
