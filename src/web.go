@@ -42,13 +42,15 @@ const indexHTML = `
 			text-align: left;
             box-shadow: none;
         }
-		.forecast-about-container {
-			text-align: left;
-		}
+        .forecast-about-container {
+            text-align: left;
+            word-wrap: break-word;
+        }  
         .forecast-about {
             border: none;
-			text-align: left;
+            text-align: left;
             box-shadow: none;
+            white-space: normal;
         }
         .forecast-table {
 			display: inline-block;
@@ -66,7 +68,7 @@ const indexHTML = `
 </head>
 <body>
     <div class="uk-container uk-margin-top">
-        <h1 class="uk-heading-divider forecast-header">Weather Forecast for Astrophotographers</h1>
+        <h1 class="uk-heading-divider forecast-header">Weather for Astrophotographers</h1>
         
         <div class="uk-grid-small uk-flex-middle" uk-grid>
             <div class="uk-width-expand">
@@ -90,7 +92,7 @@ const indexHTML = `
 
         <div class="forecast-legend-container">
             <pre class="forecast-legend">
-                <h3>Available Infomation</h3>
+                <h4>Available Infomation</h3>
 Hour           -> time of the day
 Status         -> weather status. "Good" means cloud cover is below 25% and wind speed is below 15 km/h
 Moon           -> Moon illumination percentage
@@ -103,19 +105,31 @@ Seeing         -> seeing conditions in arcseconds
 
         <div class="forecast-about-container">
             <pre class="forecast-about">
-                <h3>About and Contacts</h3>
-This page is the result of my long time struggle to find clean weather forecast for astrophotography. 
+                <h4>About</h3>
+This page is the result of my long time struggle to find clean weather forecast for astrophotography.
 The one that gives simple answer to the simple question: "Is weather good for astrophotography tonight/next 3 hours/tomorrow/etc.?"
-So here it is. Ultra-minimalistic weather forecast for astrophotographers.
-No humidity, no precipitation, no pressure or dew point. Just cloud cover and wind speed. From my experience this is all that matters.
-
-All information comes from <a href="https://open-meteo.com/">Open-Meteo.com</a> API.
-Source code is available on <a href="https://github.com/shuienko/aweather.info">GitHub</a>. Pull requests are welcome.
-For any questions, suggestions or feedback please contact me via email: todo@gmail.com 
+So here it is. Ultra-minimalistic weather forecast for astrophotographers. No humidity, no precipitation, no pressure or dew point. 
+Just cloud cover and wind speed. And a clear status Good/Bad. From my experience this is all that matters.
             </pre>
         </div>
 
+        <div class=forecast-legend-container>
+            <pre class=forecast-legend>
+                <h4>Contact & Links</h3>
+-> All information comes from <a href="https://open-meteo.com/">Open-Meteo.com</a> API.
+-> Source code is available on <a href="https://github.com/shuienko/aweather.info">GitHub</a>. Pull requests are welcome.
+-> For any questions, suggestions or feedback please contact me via email: <b>contact@aweather.info</b>
+-> My <a href="https://www.astrobin.com/users/maffei/">Astrobin</a> profile.
+-> And if you like this page, please consider supporting me using the button below. Thank you!
+            </pre>
+        </div>
+        
         <div class="footer">
+                <form action="https://www.paypal.com/donate" method="post" target="_top">
+                <input type="hidden" name="hosted_button_id" value="R3TWPEY9X4YKA" />
+                <input type="image" src="https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif" border="0" name="submit" title="PayPal - The safer, easier way to pay online!" alt="Donate with PayPal button" />
+                <img alt="" border="0" src="https://www.paypal.com/en_ES/i/scr/pixel.gif" width="1" height="1" />
+            </form>
             © aweather.info | <a href="https://open-meteo.com/">Weather data by Open-Meteo.com</a>
         </div>
     </div>
