@@ -25,13 +25,31 @@ const indexHTML = `
             text-align: center;
             margin-top: 20px;
             font-size: 1.2rem;
-            font-weight: bold;
         }
 		.forecast-table-container {
     		overflow-x: auto;
     		white-space: nowrap;
 			text-align: center;
 		}
+		.forecast-legend-container {
+    		overflow-x: auto;
+    		white-space: nowrap;
+			text-align: left;
+		}
+        .forecast-legend {
+			display: inline-block;
+            border: none;
+			text-align: left;
+            box-shadow: none;
+        }
+		.forecast-about-container {
+			text-align: left;
+		}
+        .forecast-about {
+            border: none;
+			text-align: left;
+            box-shadow: none;
+        }
         .forecast-table {
 			display: inline-block;
             border: none;
@@ -70,8 +88,35 @@ const indexHTML = `
 	        <pre id="weatherResult" class="uk-margin-top forecast-table"></pre>
 		</div>
 
+        <div class="forecast-legend-container">
+            <pre class="forecast-legend">
+                <h3>Available Infomation</h3>
+Hour           -> time of the day
+Status         -> weather status. "Good" means cloud cover is below 25% and wind speed is below 15 km/h
+Moon           -> Moon illumination percentage
+Low, Mid, High -> cloud cover percentage at different altitudes
+Wind           -> wind speed in km/h
+Gusts          -> wind gusts in km/h
+Seeing         -> seeing conditions in arcseconds
+            </pre>
+        </div>
+
+        <div class="forecast-about-container">
+            <pre class="forecast-about">
+                <h3>About and Contacts</h3>
+This page is the result of my long time struggle to find clean weather forecast for astrophotography. 
+The one that gives simple answer to the simple question: "Is weather good for astrophotography tonight/next 3 hours/tomorrow/etc.?"
+So here it is. Ultra-minimalistic weather forecast for astrophotographers.
+No humidity, no precipitation, no pressure or dew point. Just cloud cover and wind speed. From my experience this is all that matters.
+
+All information comes from <a href="https://open-meteo.com/">Open-Meteo.com</a> API.
+Source code is available on <a href="https://github.com/shuienko/aweather.info">GitHub</a>. Pull requests are welcome.
+For any questions, suggestions or feedback please contact me via email: todo@gmail.com 
+            </pre>
+        </div>
+
         <div class="footer">
-            © aweather.info
+            © aweather.info | <a href="https://open-meteo.com/">Weather data by Open-Meteo.com</a>
         </div>
     </div>
 
@@ -132,7 +177,7 @@ const indexHTML = `
 
             const cityName = document.getElementById('city').value;
 			const shortName = cityName.split(',')[0].trim();
-			const country = cityName.split(',')[1].trim();
+			const country = cityName.split(',').slice(-1)[0].trim();
 
             // Display forecast details
             const forecastDetails = document.getElementById('forecastDetails');
