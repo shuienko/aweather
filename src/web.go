@@ -94,7 +94,7 @@ const indexHTML = `
             <pre class="forecast-legend">
                 <h4>Available Infomation</h3>
 Hour           -> time of the day
-Status         -> weather status. "Good" means cloud cover is below 25% and wind speed is below 15 km/h
+Status         -> weather status. "Good" means cloud cover is below 25%% and wind speed is below 15 km/h
 Moon           -> Moon illumination percentage
 Low, Mid, High -> cloud cover percentage at different altitudes
 Wind           -> wind speed in km/h
