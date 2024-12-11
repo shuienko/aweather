@@ -122,6 +122,7 @@ func fetchSuggestions(query string) ([]Suggestion, error) {
 
 	// If not in cache, make request to OpenMeteoGeoAPI
 	if err != nil {
+		log.Println("INFO: Making request to Open-Meteo Geo API and parsing response for query: ", query)
 		url := fmt.Sprintf("%s?name=%s", OpenMeteoGeoAPIEndpoint, query)
 		resp, err := http.Get(url)
 		if err != nil {

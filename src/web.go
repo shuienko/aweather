@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 )
@@ -266,6 +267,9 @@ Just cloud cover and wind speed. And a clear status Good/Bad. From my experience
 `
 
 func handleIndex(w http.ResponseWriter, r *http.Request) {
+	// Log HTTP request
+	log.Printf("INFO: From: %s | User-Agent: %s | Path: %s", r.RemoteAddr, r.UserAgent(), r.URL.Path)
+
 	// Retrieve cookies
 	cityNameCookie, _ := r.Cookie("cityName")
 	latCookie, _ := r.Cookie("latitude")
@@ -308,6 +312,8 @@ func handleWeather(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid latitude or longitude", http.StatusBadRequest)
 		return
 	}
+
+	log.Printf("INFO: Requested weather data for lat: %s, lon: %s", lat, lon)
 
 	data := OpenMeteoAPIResponse{}
 	data.FetchData(OpenMeteoAPIEndpoint, OpenMeteoAPIParams, float64ToSting(latitude), float64ToSting(longitude))
