@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"strconv"
 )
 
@@ -187,7 +188,19 @@ Just cloud cover and wind speed. And a clear status Good/Bad. From my experience
         const latitudeInput = document.getElementById("latitude");
         const longitudeInput = document.getElementById("longitude");
 
+        // Check if city name matches a suggestion (add this check)
+        if (!cityNameInput.value.includes(", ")) {
+            alert("Please select a valid suggestion from the list");
+            return;
+        }
+
         const cityName = cityNameInput.value;
+        // Validate city name length
+        if (cityName.length < 2) {
+            alert("Please enter a city name with at least 2 characters.");
+            return;
+        }
+
         const latitude = latitudeInput.value;
         const longitude = longitudeInput.value;
 
@@ -195,13 +208,13 @@ Just cloud cover and wind speed. And a clear status Good/Bad. From my experience
             return alert("Please select a valid suggestion from the list");
         }
 
-        // Save city name, latitude, and longitude in cookies (encoded)
-        document.cookie = "cityName=" + encodeURIComponent(cityName) + "; path=/";
-        document.cookie = "latitude=" + encodeURIComponent(latitude) + "; path=/";
-        document.cookie = "longitude=" + encodeURIComponent(longitude) + "; path=/";
-
         const shortName = cityName.split(",")[0].trim();
         const country = cityName.split(",").slice(-1)[0].trim();
+        
+        // Save city name, latitude, and longitude in cookies (encoded)
+        document.cookie = "cityName=" + encodeURIComponent(shortName + ", " + country) + "; path=/";
+        document.cookie = "latitude=" + encodeURIComponent(latitude) + "; path=/";
+        document.cookie = "longitude=" + encodeURIComponent(longitude) + "; path=/";
 
         // Display forecast details
         const forecastDetails = document.getElementById("forecastDetails");
@@ -241,7 +254,17 @@ Just cloud cover and wind speed. And a clear status Good/Bad. From my experience
 
         if (cookieMap.cityName) {
             cityNameInput.value = cookieMap.cityName;
+            
+            // Add backspace event listener for clearing on first backspace
+            cityNameInput.addEventListener("keydown", function(event) {
+            if (event.key === "Backspace") {
+                cityNameInput.value = "";
+                latitudeInput.value = ""; // Clear related fields as well
+                longitudeInput.value = "";
+            }
+            });
         }
+
         if (cookieMap.latitude) {
             latitudeInput.value = cookieMap.latitude;
         }
@@ -260,6 +283,20 @@ Just cloud cover and wind speed. And a clear status Good/Bad. From my experience
                 fetchWeather(); // Call the fetchWeather function
             }
         });
+    });
+
+    // Add backspace event listener for clearing on first backspace
+    cityNameInput.addEventListener("keydown", function(event) {
+        if (event.key === "Backspace") {
+            cityNameInput.value = "";
+            latitudeInput.value = ""; // Clear related fields as well
+            longitudeInput.value = "";
+            
+            // Hide forecast details and weather result when clearing the city
+            const forecastDetails = document.getElementById("forecastDetails");
+            forecastDetails.style.display = "none";
+            document.getElementById("weatherResult").textContent = "";
+        }
     });
     </script>
 </body>
@@ -343,7 +380,7 @@ func handleSuggestions(w http.ResponseWriter, r *http.Request) {
 		// Save cookies for city name, latitude, and longitude
 		http.SetCookie(w, &http.Cookie{
 			Name:  "cityName",
-			Value: selected.Name,
+			Value: url.QueryEscape(selected.Name),
 			Path:  "/",
 		})
 		http.SetCookie(w, &http.Cookie{
