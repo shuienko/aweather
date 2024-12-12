@@ -26,6 +26,7 @@ func main() {
 	http.HandleFunc("/", handleIndex)
 	http.HandleFunc("/weather", handleWeather)
 	http.HandleFunc("/suggestions", handleSuggestions)
+	http.HandleFunc("/favicon.ico", handleFavicon)
 
 	log.Println("Server is running at http://localhost:8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
