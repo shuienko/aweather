@@ -113,18 +113,20 @@ func (response *OpenMeteoAPIResponse) FetchData(apiEndpoint, parameters, lat, lo
 		log.Println("ERROR: cannot Unmarshal JSON", err)
 		return
 	}
-
 }
 
 // fetchSuggestions() makes request to OpenMeteoGeoAPI and returns Suggestion object
 func fetchSuggestions(query string) ([]Suggestion, error) {
+	// Encode query
+	encodedQuery := url.QueryEscape(query)
+
 	// Check if query is in cache
-	resultByte, err := cache.Get(query)
+	resultByte, err := cache.Get(encodedQuery)
 
 	// If not in cache, make request to OpenMeteoGeoAPI
 	if err != nil {
-		log.Println("INFO: Making request to Open-Meteo Geo API and parsing response for query: ", query)
-		url := fmt.Sprintf("%s?name=%s", OpenMeteoGeoAPIEndpoint, query)
+		log.Println("INFO: Making request to Open-Meteo Geo API and parsing response for query: ", encodedQuery)
+		url := fmt.Sprintf("%s?name=%s", OpenMeteoGeoAPIEndpoint, encodedQuery)
 		resp, err := http.Get(url)
 		if err != nil {
 			return nil, err
@@ -140,12 +142,12 @@ func fetchSuggestions(query string) ([]Suggestion, error) {
 
 		// Save response to cache
 		jsonData, _ := json.Marshal(result.Results)
-		cache.Set(query, jsonData)
+		cache.Set(encodedQuery, jsonData)
 
 		// Return results
 		return result.Results, nil
 	} else {
-		log.Println("INFO: Using cached data for query", query)
+		log.Println("INFO: Using cached data for query", encodedQuery)
 
 		// Unmarshal cached data
 		result := []Suggestion{}
