@@ -66,7 +66,7 @@ func (dp DataPoints) setSeeing() DataPoints {
 
 		// Approximate seeing using empirical formula
 		// ε ∝ V^0.6 * T_grad^0.4
-		point.Seeing = 0.1 * math.Pow(point.WindSpeed200hPa, 0.6) * math.Pow(tempGradient, 0.4)
+		point.Seeing = 0.1 * math.Pow(point.WindSpeed200hPa/3.6, 0.6) * math.Pow(math.Abs(tempGradient), 0.4)
 
 		updatedPoints = append(updatedPoints, point)
 	}
