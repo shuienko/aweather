@@ -67,4 +67,4 @@ If detailed turbulence data isn’t available, you can estimate seeing based on 
     * $T_{\text{grad}}$ : Temperature gradient between ground and upper atmosphere.
 4.	Example Seeing Estimation:
 If wind speed at 10 km altitude ( $V$ ) is $20 m/s$ and the temperature gradient is $5°C/km$: 
-* $\epsilon \approx 1.5$  arcseconds.
+    * $\epsilon \approx 1.5$  arcseconds.
