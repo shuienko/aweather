@@ -21,7 +21,7 @@ Feel free to build your own docker container and deploy using any convinient met
 ```
 docker build
 ```
-Please keep in mind no Open-Meteo API key set by default.
+Please keep in mind _no Open-Meteo API key set by default_.
 
 ## Seeing evaluation
 
