@@ -27,7 +27,7 @@ jobs:
         id: set-tags
         run: |
           if [[ "${{ github.ref_name }}" == "main" ]]; then
-            echo "tags=latest,$(date +'%Y.%m')" >> $GITHUB_ENV
+            echo "tags=latest" >> $GITHUB_ENV
           elif [[ "${{ github.ref_name }}" == "dev" ]]; then
             echo "tags=dev" >> $GITHUB_ENV
           fi
