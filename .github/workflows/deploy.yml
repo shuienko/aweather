@@ -1,4 +1,4 @@
-name: Deploy for Google Cloud Run
+name: Build & Deploy
 
 on:
   push:
@@ -6,36 +6,52 @@ on:
       - main
 
 jobs:
-  build:
+  deploy:
+    name: Build and Push Docker Image
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      # Checkout the code
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-      - name: Authenticate with Google Cloud
-        uses: google-github-actions/auth@v1
+      # Set up Google Cloud authentication
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
 
-      - name: Configure Docker for Google Cloud
-        run: gcloud auth configure-docker europe-west1-docker.pkg.dev
+      # Configure Docker to use Google Cloud CLI
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: aweather-444412
 
-      - name: Build and Push Docker Image
+      - name: Configure Docker for Artifact Registry
         run: |
-          docker build -t europe-west1-docker.pkg.dev/aweather-444412/repo/aweather:$GITHUB_SHA .
-          docker push europe-west1-docker.pkg.dev/aweather-444412/repo/aweather:$GITHUB_SHA
+          gcloud auth configure-docker europe-west1-docker.pkg.dev --quiet
 
+      # Build the Docker image
+      - name: Build Docker Image
+        run: |
+          docker build -t europe-west1-docker.pkg.dev/aweather-444412/repo/aweather:latest .
+
+      # Push the Docker image
+      - name: Push Docker Image
+        run: |
+          docker push europe-west1-docker.pkg.dev/aweather-444412/repo/aweather:latest
+
+      # Deploy
       - name: Deploy to Cloud Run
         run: |
-            gcloud run deploy aweather \
-              --image europe-west1-docker.pkg.dev/aweather-444412/repo/aweather:$GITHUB_SHA \
-                --platform managed \
-                --region europe-west1 \
-                --port 8080 \
-                --memory 256Mi \
-                --cpu 1 \
-                --timeout 30s \
-                --min-instances 0 \
-                --max-instances 1 \
-                --allow-unauthenticated
+              gcloud run deploy aweather \
+                --image europe-west1-docker.pkg.dev/aweather-444412/repo/aweather:latest \
+                  --platform managed \
+                  --region europe-west1 \
+                  --port 8080 \
+                  --memory 256Mi \
+                  --cpu 1 \
+                  --timeout 30s \
+                  --min-instances 0 \
+                  --max-instances 1 \
+                  --allow-unauthenticated
