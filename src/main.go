@@ -23,11 +23,22 @@ var cache *bigcache.BigCache
 func main() {
 	cache, _ = bigcache.New(context.Background(), bigcache.DefaultConfig(cacheTTL))
 
-	http.HandleFunc("/", handleIndex)
-	http.HandleFunc("/weather", handleWeather)
-	http.HandleFunc("/suggestions", handleSuggestions)
-	http.HandleFunc("/favicon.ico", handleFavicon)
+	mux := http.NewServeMux()
 
-	log.Println("Server is running at http://localhost:8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	// Define all routes
+	mux.HandleFunc("/weather", handleWeather)
+	mux.HandleFunc("/suggestions", handleSuggestions)
+	mux.HandleFunc("/favicon.ico", handleFavicon)
+
+	// Use a custom NotFound handler for unknown routes and handleIndex
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/" && r.URL.Path != "/weather" && r.URL.Path != "/suggestions" && r.URL.Path != "/favicon.ico" {
+			http.NotFound(w, r)
+			return
+		}
+		handleIndex(w, r)
+	})
+
+	log.Println("Server started on :8080")
+	log.Fatal(http.ListenAndServe(":8080", mux))
 }

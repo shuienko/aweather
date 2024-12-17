@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -52,6 +53,12 @@ func handleIndex(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleWeather(w http.ResponseWriter, r *http.Request) {
+	// Block external calls
+	if !isInternalRequest(r) {
+		http.Error(w, "Access Denied", http.StatusForbidden)
+		return
+	}
+
 	lat := r.URL.Query().Get("lat")
 	lon := r.URL.Query().Get("lon")
 
@@ -78,6 +85,12 @@ func handleWeather(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleSuggestions(w http.ResponseWriter, r *http.Request) {
+	// Block external calls
+	if !isInternalRequest(r) {
+		http.Error(w, "Access Denied", http.StatusForbidden)
+		return
+	}
+
 	query := r.URL.Query().Get("q")
 	if query == "" {
 		http.Error(w, "Query parameter is missing", http.StatusBadRequest)
@@ -127,4 +140,14 @@ func handleFavicon(w http.ResponseWriter, r *http.Request) {
 
 func float64ToSting(f float64) string {
 	return strconv.FormatFloat(f, 'f', 6, 64)
+}
+
+// Helper function to check internal request
+func isInternalRequest(r *http.Request) bool {
+	ip, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		return false
+	}
+	parsedIP := net.ParseIP(ip)
+	return parsedIP.IsLoopback() || parsedIP.IsPrivate()
 }
