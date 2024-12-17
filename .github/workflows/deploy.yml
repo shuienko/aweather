@@ -1,4 +1,4 @@
-name: Build & Deploy
+name: Deploy App
 
 on:
   push:
@@ -12,37 +12,37 @@ jobs:
 
     steps:
       # Checkout the code
-      - name: Checkout Code
+      - name: checkout
         uses: actions/checkout@v4
 
       # Set up Google Cloud authentication
-      - name: Authenticate to Google Cloud
+      - name: auth
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
 
       # Configure Docker to use Google Cloud CLI
-      - name: Set up Google Cloud SDK
+      - name: setup SDK
         uses: google-github-actions/setup-gcloud@v2
         with:
           project_id: aweather-444412
 
-      - name: Configure Docker for Artifact Registry
+      - name: configure docker client
         run: |
           gcloud auth configure-docker europe-west1-docker.pkg.dev --quiet
 
       # Build the Docker image
-      - name: Build Docker Image
+      - name: build image
         run: |
           docker build -t europe-west1-docker.pkg.dev/aweather-444412/repo/aweather:latest .
 
       # Push the Docker image
-      - name: Push Docker Image
+      - name: push image
         run: |
           docker push europe-west1-docker.pkg.dev/aweather-444412/repo/aweather:latest
 
       # Deploy
-      - name: Deploy to Cloud Run
+      - name: deploy to Cloud Run
         run: |
               gcloud run deploy aweather \
                 --image europe-west1-docker.pkg.dev/aweather-444412/repo/aweather:latest \
