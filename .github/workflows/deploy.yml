@@ -19,7 +19,7 @@ jobs:
           credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
 
       - name: Configure Docker for Google Cloud
-        run: gcloud auth configure-docker
+        run: gcloud auth configure-docker europe-west1-docker.pkg.dev
 
       - name: Build and Push Docker Image
         run: |
