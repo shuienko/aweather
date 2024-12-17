@@ -23,13 +23,13 @@ jobs:
 
       - name: Build and Push Docker Image
         run: |
-          docker build -t europe-west1-docker.pkg.dev/aweather-44441/repo/aweather:$GITHUB_SHA .
-          docker push europe-west1-docker.pkg.dev/aweather-44441/repo/aweather:$GITHUB_SHA
+          docker build -t europe-west1-docker.pkg.dev/aweather-444412/repo/aweather:$GITHUB_SHA .
+          docker push europe-west1-docker.pkg.dev/aweather-444412/repo/aweather:$GITHUB_SHA
 
       - name: Deploy to Cloud Run
         run: |
             gcloud run deploy aweather \
-              --image europe-west1-docker.pkg.dev/aweather-44441/repo/aweather:$GITHUB_SHA \
+              --image europe-west1-docker.pkg.dev/aweather-444412/repo/aweather:$GITHUB_SHA \
                 --platform managed \
                 --region europe-west1 \
                 --port 8080 \
