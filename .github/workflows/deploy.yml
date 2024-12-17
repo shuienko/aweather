@@ -1,0 +1,41 @@
+name: Deploy for Google Cloud Run
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Authenticate with Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+
+      - name: Configure Docker for Google Cloud
+        run: gcloud auth configure-docker
+
+      - name: Build and Push Docker Image
+        run: |
+          docker build -t gcr.io/aweather-444412/aweather:$GITHUB_SHA .
+          docker push gcr.io/aweather-444412/aweather:$GITHUB_SHA
+
+      - name: Deploy to Cloud Run
+        run: |
+            gcloud run deploy aweather \
+              --image gcr.io/aweather-444412/aweather:$GITHUB_SHA \
+                --platform managed \
+                --region europe-west1 \
+                --port 8080 \
+                --memory 256Mi \
+                --cpu 1 \
+                --timeout 30s \
+                --min-instances 0 \
+                --max-instances 1 \
+                --allow-unauthenticated
