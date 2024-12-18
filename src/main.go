@@ -15,7 +15,7 @@ const (
 	OpenMeteoAPIParams      = "temperature_2m,cloud_cover_low,cloud_cover_mid,cloud_cover_high,wind_speed_10m,wind_gusts_10m,wind_speed_200hPa,temperature_500hPa"
 	MaxCloudCover           = 25               // percentage
 	MaxWindSpeed            = 15               // km/h
-	cacheTTL                = 10 * time.Minute // cache time to live in
+	cacheTTL                = 10 * time.Minute // cache TTL
 )
 
 var cache *bigcache.BigCache
