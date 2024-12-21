@@ -163,12 +163,8 @@ func (data OpenMeteoAPIResponse) Points() DataPoints {
 	points := DataPoints{}
 
 	for i := 0; i < len(data.Hourly.Time); i++ {
-		location, err := time.LoadLocation(data.Timezone)
-		if err != nil {
-			log.Println("ERROR:", err)
-		}
-
-		time, err := time.ParseInLocation("2006-01-02T15:04", data.Hourly.Time[i], location)
+		location, _ := time.LoadLocation(data.Timezone)
+		time, _ := time.ParseInLocation("2006-01-02T15:04", data.Hourly.Time[i], location)
 
 		point := DataPoint{
 			Time:              time,
