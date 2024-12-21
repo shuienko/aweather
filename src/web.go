@@ -71,10 +71,10 @@ func handleWeather(w http.ResponseWriter, r *http.Request) {
 
 	data := OpenMeteoAPIResponse{}
 	data.FetchData(OpenMeteoAPIEndpoint, OpenMeteoAPIParams, float64ToSting(latitude), float64ToSting(longitude))
-	markdownTable := data.Points().setMoonIllumination().setSeeing().Print()
+	weatherTable := data.Points().setMoonIllumination().setSeeing().Print()
 
 	w.Header().Set("Content-Type", "text/plain")
-	fmt.Fprint(w, markdownTable)
+	fmt.Fprint(w, weatherTable)
 }
 
 func handleSuggestions(w http.ResponseWriter, r *http.Request) {
