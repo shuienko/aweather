@@ -166,6 +166,10 @@ func (data OpenMeteoAPIResponse) Points() DataPoints {
 		location, _ := time.LoadLocation(data.Timezone)
 		time, _ := time.ParseInLocation("2006-01-02T15:04", data.Hourly.Time[i], location)
 
+		if i == 0 {
+			log.Printf("DEBUG: %v | %v | %v\n", data.Hourly.Time[i], time, location)
+		}
+
 		point := DataPoint{
 			Time:              time,
 			Temperature2M:     data.Hourly.Temperature2M[i],
