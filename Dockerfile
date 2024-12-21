@@ -12,11 +12,21 @@ COPY src/ ./
 # Build the main package only
 RUN go build -v -o /usr/local/bin/app .
 
-FROM alpine:3.20.1
+# Install tzdata
+RUN apk add --no-cache tzdata
+
+FROM alpine:latest
+
+# Copy application binary
 COPY --from=build /usr/local/bin/app /usr/local/bin/app
 
+# Copy tzdata
+COPY --from=build /usr/share/zoneinfo /usr/share/zoneinfo
+
+# Set entrypoint
 ENTRYPOINT ["/usr/local/bin/app"]
 
+# Application must listen on port 8080 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 CMD wget --spider --quiet http://localhost:8080 || exit 1
 
 # Expose port 8080 to the outside world
