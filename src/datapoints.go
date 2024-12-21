@@ -31,18 +31,6 @@ func (d DataPoint) isGood(maxCloudCover int64, maxWind float64) bool {
 	}
 }
 
-// Good() returns DataPoints which are after "Now", are "Good" and within "Night" defined by in config
-func (dp DataPoints) goodPointsOnly(maxCloudCover int64, maxWind float64) DataPoints {
-	good := DataPoints{}
-	for _, v := range dp {
-		if v.Time.After(time.Now()) && v.isGood(maxCloudCover, maxWind) {
-			good = append(good, v)
-		}
-	}
-
-	return good
-}
-
 // setMoonIllumination() sets MoonIllum value for point in DataPoints
 func (dp DataPoints) setMoonIllumination() DataPoints {
 	updatedPoints := DataPoints{}

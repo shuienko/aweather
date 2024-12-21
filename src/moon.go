@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-// MoonIllumination calculates the Moon's illumination percentage for a given date.
+// MoonIllumination calculates the Moon's illumination percentage for a given time
 func moonIllumination(date time.Time) float64 {
 	const synodicMonth float64 = 29.53059      // Average length of a synodic month in days
 	const newMoonReference float64 = 2451549.5 // Julian date for a known new moon (Jan 6, 2000 18:14 UTC)
@@ -30,8 +30,8 @@ func moonIllumination(date time.Time) float64 {
 
 // dateToJulianDate converts a time.Time to Julian Date
 func dateToJulianDate(date time.Time) float64 {
-	year, month, day := date.Date()
-	hour, min, sec := date.Clock()
+	year, month, day := date.UTC().Date()
+	hour, min, sec := date.UTC().Clock()
 
 	// If the month is January or February, adjust the year and month
 	if month <= 2 {
