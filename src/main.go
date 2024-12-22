@@ -25,6 +25,9 @@ func main() {
 
 	mux := http.NewServeMux()
 
+	// Handle static files (favicon and icons)
+	mux.Handle("/static/", http.FileServer(http.FS(StaticFiles)))
+
 	// Define all routes
 	mux.HandleFunc("/weather", handleWeather)
 	mux.HandleFunc("/suggestions", handleSuggestions)
