@@ -57,3 +57,10 @@ jobs:
                   --tag latest \
                   --allow-unauthenticated \
                   --service-account ${{ secrets.GCP_SERVICE_USER }}
+                  
+      # Send all traffic to the latest tag
+      - name: switch traffic to latest
+        run: |
+              gcloud run services update-traffic aweather \
+                --region europe-west1
+                --to-tags latest=100
