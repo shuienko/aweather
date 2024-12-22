@@ -77,17 +77,17 @@ func (dp DataPoints) Print() string {
 				out += "\n"
 			}
 			out += fmt.Sprintf("%s - %s\n", date, dayOfWeek)
-			out += " Hour | Status | Temp  | Moon  | Low | Mid  | High | Wind  | Gusts | Seeing \n"
-			out += "-----|--------|-------|-------|-----|------|------|-------|-------|-------\n"
+			out += " Hour | Ok? | Temp  | Moon  | Low | Mid  | High | Wind  | Gusts | Seeing \n"
+			out += "-----|-----|-------|-------|-----|------|------|-------|-------|-------\n"
 			currentDate = date
 		}
 
-		status := "Bad"
+		status := "-"
 		if point.isGood(MaxCloudCover, MaxWindSpeed) {
-			status = "Good"
+			status = "ok"
 		}
 
-		out += fmt.Sprintf("%02d | %6s | %5.1f | %3d%%  | %3d | %3d  | %3d  | %5.1f | %5.1f | %3.1f \n",
+		out += fmt.Sprintf("%02d | %3s | %5.1f | %3d%%  | %3d | %3d  | %3d  | %5.1f | %5.1f | %3.1f \n",
 			point.Time.Hour(), status, point.Temperature2M, point.MoonIllum, point.LowClouds, point.MidClouds, point.HighClouds, point.WindSpeed, point.WindGusts, point.Seeing)
 	}
 
