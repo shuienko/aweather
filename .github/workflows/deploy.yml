@@ -55,6 +55,5 @@ jobs:
                   --min-instances 0 \
                   --max-instances 1 \
                   --tag latest \
-                  --traffic-latest 100 \
                   --allow-unauthenticated \
                   --service-account ${{ secrets.GCP_SERVICE_USER }}
