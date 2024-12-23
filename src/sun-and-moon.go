@@ -8,7 +8,7 @@ import (
 	"github.com/soniakeys/meeus/v3/moonillum"
 )
 
-// MoonIllumination calculates the Moon's illumination percentage for a given time
+// moonIllumination calculates the Moon's illumination percentage for a given time
 func moonIllumination(date time.Time) float64 {
 
 	// Convert the date to Julian Day
