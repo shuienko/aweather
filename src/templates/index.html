@@ -86,38 +86,38 @@
 	        <pre id="weatherResult" class="uk-margin-top forecast-table"></pre>
 		</div>
 
-        <div class="forecast-legend-container">
-            <pre class="forecast-legend">
-                <h4>Available Infomation</h3>
-Hour           -> time of the day
-Ok?            -> weather status. "ok" means cloud cover is below 25%% and wind speed is below 15 km/h
-Temp           -> temperature in Celsius
-Moon           -> Moon illumination percentage
-Low, Mid, High -> cloud cover percentage at different altitudes
-Wind           -> wind speed in km/h
-Gusts          -> wind gusts in km/h
-Seeing         -> seeing conditions in arcseconds
-            </pre>
-        </div>
-
         <div class="forecast-about-container">
             <pre class="forecast-about">
                 <h4>About</h3>
-This page is the result of my long time struggle to find clean weather forecast for astrophotography.
-The one that gives simple answer to the simple question: "Is weather good for astrophotography tonight/next 3 hours/tomorrow/etc.?"
-So here it is. Ultra-minimalistic weather forecast for astrophotographers. No humidity, no precipitation, no pressure or dew point. 
-Just cloud cover and wind speed. And a clear status "ok" when everything is fine. From my experience this is all that matters.
+This site comes from my long-time struggle to find a clean, no-nonsense weather forecast for astrophotography.
+I wanted something that answers one simple question: <b>"Is the weather good for astrophotography tonight, in the next 3 hours, or tomorrow?"</b>                    
+So, here it is – an ultra-minimalist weather forecast built specifically for astrophotographers. No humidity, no precipitation, no pressure, or dew point to fuss over.
+Just cloud cover, wind speed, and a simple "ok" when conditions are good. From my experience, that's all that really matters.
+            </pre>
+        </div>
+
+        <div class="forecast-legend-container">
+            <pre class="forecast-legend">
+                <h4>Table Columns</h3>
+Hour           - time of the day
+Ok?            - weather status. "ok" means cloud cover is below 25%% and wind speed is below 15 km/h
+Temp           - temperature in Celsius
+Moon           - Moon illumination percentage
+Low, Mid, High - cloud cover percentage at different altitudes
+Wind           - wind speed in km/h
+Gusts          - wind gusts in km/h
+Seeing         - seeing conditions in arcseconds
             </pre>
         </div>
 
         <div class=forecast-legend-container>
             <pre class=forecast-legend>
                 <h4>Contact & Links</h3>
--> All information comes from <a href="https://open-meteo.com/">Open-Meteo.com</a> API.
--> Source code is available on <a href="https://github.com/shuienko/aweather.info">GitHub</a>. Pull requests are welcome.
--> For any questions, suggestions or feedback please contact me via email: <b>contact@aweather.info</b>
--> My <a href="https://www.astrobin.com/users/maffei/">Astrobin</a> profile. It ain't much, but it's honest work. :-)
--> And if you like this page, please consider supporting me using the button below. Thank you!
+- All information comes from <a href="https://open-meteo.com/">Open-Meteo.com</a> API.
+- Source code is available on <a href="https://github.com/shuienko/aweather.info">GitHub</a>. Pull requests are welcome.
+- For any questions, suggestions or feedback please contact me via email: <b>contact@aweather.info</b>
+- My <a href="https://www.astrobin.com/users/maffei/">Astrobin</a> profile. It ain't much, but it's honest work. :-)
+- And if you like this page, please consider supporting me using the button below. Thank you!
             </pre>
         </div>
         
@@ -125,177 +125,155 @@ Just cloud cover and wind speed. And a clear status "ok" when everything is fine
                 <form action="https://www.paypal.com/donate" method="post" target="_top">
                 <input type="hidden" name="hosted_button_id" value="R3TWPEY9X4YKA" />
                 <input type="image" src="https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif" border="0" name="submit" title="PayPal - The safer, easier way to pay online!" alt="Donate with PayPal button" />
-                <img alt="" border="0" src="https://www.paypal.com/en_ES/i/scr/pixel.gif" width="1" height="1" />
+                <img alt="" border="0" src="https://www.paypal.com/en_US/i/scr/pixel.gif" width="1" height="1" />
             </form>
             © aweather.info | <a href="https://open-meteo.com/">Weather data by Open-Meteo.com</a>
         </div>
     </div>
 
     <script>
-    function fetchSuggestions(query) {
-        if (query.length < 2) {
-            document.getElementById('suggestions').style.display = 'none';
-            return;
-        }
-        fetch('/suggestions?q=' + encodeURIComponent(query))
-            .then(response => response.json())
-            .then(data => {
-                const suggestions = document.getElementById('suggestions');
-                suggestions.innerHTML = '';
-                if (data.length > 0) {
-                    suggestions.style.display = 'block';
-                    data.forEach(function(item) {
-                        const regions = [item.admin1, item.admin2, item.admin3, item.admin4]
-                            .filter(function(region) {
-                                return region && region.trim().length > 0;
-                            })
-                            .join(', ');
-                        const fullName = item.name + (regions ? ', ' + regions : '') + ', ' + item.country;
-
-                        const li = document.createElement('li');
-                        li.textContent = fullName;
-                        li.onclick = function() {
-                            document.getElementById('city').value = fullName;
-
-                            // Ensure the latitude and longitude inputs exist and set their values
-                            const latitudeInput = document.getElementById('latitude');
-                            const longitudeInput = document.getElementById('longitude');
-                            if (latitudeInput && longitudeInput) {
-                                latitudeInput.value = item.latitude;
-                                longitudeInput.value = item.longitude;
-                            } else {
-                                console.error("Latitude or longitude input not found in the DOM.");
-                            }
-
-                            suggestions.style.display = 'none';
-                        };
-                        suggestions.appendChild(li);
-                    });
-                } else {
-                    suggestions.style.display = 'none';
-                }
-            })
-            .catch(console.error);
-    }
-
-    function fetchWeather() {
-        const cityNameInput = document.getElementById("city");
-        const latitudeInput = document.getElementById("latitude");
-        const longitudeInput = document.getElementById("longitude");
-
-        // Check if city name matches a suggestion (add this check)
-        if (!cityNameInput.value.includes(", ")) {
-            alert("Please select a valid suggestion from the list");
-            return;
-        }
-
-        const cityName = cityNameInput.value;
-        // Validate city name length
-        if (cityName.length < 2) {
-            alert("Please enter a city name with at least 2 characters.");
-            return;
-        }
-
-        const latitude = latitudeInput.value;
-        const longitude = longitudeInput.value;
-
-        if (!latitude || !longitude || isNaN(latitude) || isNaN(longitude)) {
-            return alert("Please select a valid suggestion from the list");
-        }
-
-        const shortName = cityName.split(",")[0].trim();
-        const country = cityName.split(",").slice(-1)[0].trim();
-
-        // Display forecast details
-        const forecastDetails = document.getElementById("forecastDetails");
-        forecastDetails.textContent = shortName + ", " + country + "  |  lat: " + latitude + ", lon: " + longitude;
-        forecastDetails.style.display = "block";
-
-        // Fetch weather data from the backend
-        fetch("/weather?lat=" + encodeURIComponent(latitude) + "&lon=" + encodeURIComponent(longitude))
-            .then(function (response) {
-                if (!response.ok) {
-                    throw new Error("Error fetching weather data: " + response.statusText);
-                }
-                return response.text();
-            })
-            .then(function (data) {
-                document.getElementById("weatherResult").textContent = data;
-            })
-            .catch(function (error) {
-                console.error(error);
-                alert("Failed to fetch weather data. Please try again later.");
-            });
-
-        // Set cookies
-        const maxAge = "max-age=" + (365 * 24 * 60 * 60);  // 365 days in seconds
-
-        // Save city name, latitude, and longitude in cookies (encoded)
-        document.cookie = "cityName=" + encodeURIComponent(shortName + ", " + country) + "; path=/; " + maxAge;
-        document.cookie = "latitude=" + encodeURIComponent(latitude) + "; path=/; " + maxAge;
-        document.cookie = "longitude=" + encodeURIComponent(longitude) + "; path=/; " + maxAge;
-    }
-
-    // Decode cookie values and populate the input fields
-    function loadCookies() {
-        const cookies = document.cookie.split("; ");
-        const cookieMap = {};
-        cookies.forEach(cookie => {
-            const [key, value] = cookie.split("=");
-            cookieMap[key] = decodeURIComponent(value);
-        });
-
-        // Populate fields if cookies exist
-        const cityNameInput = document.getElementById("city");
-        const latitudeInput = document.getElementById("latitude");
-        const longitudeInput = document.getElementById("longitude");
-
-        if (cookieMap.cityName) {
-            cityNameInput.value = cookieMap.cityName;
-            
-            // Add backspace event listener for clearing on first backspace
-            cityNameInput.addEventListener("keydown", function(event) {
-            if (event.key === "Backspace") {
-                cityNameInput.value = "";
-                latitudeInput.value = ""; // Clear related fields as well
-                longitudeInput.value = "";
-            }
-            });
-        }
-
-        if (cookieMap.latitude) {
-            latitudeInput.value = cookieMap.latitude;
-        }
-        if (cookieMap.longitude) {
-            longitudeInput.value = cookieMap.longitude;
-        }
-    }
-
-    document.addEventListener("DOMContentLoaded", function () {
-        loadCookies();
-
-        // Add keypress listener to execute fetchWeather on Enter key press
-        document.getElementById("city").addEventListener("keypress", function (event) {
-            if (event.key === "Enter") {
-                event.preventDefault(); // Prevent default form submission
-                fetchWeather(); // Call the fetchWeather function
-            }
-        });
-    });
-
-    // Add backspace event listener for clearing on first backspace
-    cityNameInput.addEventListener("keydown", function(event) {
-        if (event.key === "Backspace") {
-            cityNameInput.value = "";
-            latitudeInput.value = ""; // Clear related fields as well
-            longitudeInput.value = "";
-            
-            // Hide forecast details and weather result when clearing the city
+        // Attach event listeners after DOM is fully loaded
+        document.addEventListener("DOMContentLoaded", function () {
+            // Initialize variables after DOM is fully loaded
+            const cityNameInput = document.getElementById("city");
+            const latitudeInput = document.getElementById("latitude");
+            const longitudeInput = document.getElementById("longitude");
             const forecastDetails = document.getElementById("forecastDetails");
-            forecastDetails.style.display = "none";
-            document.getElementById("weatherResult").textContent = "";
+            const weatherResult = document.getElementById("weatherResult");
+        
+            // Attach keydown listener to cityNameInput
+            cityNameInput.addEventListener("keydown", function(event) {
+                if (event.key === "Backspace") {
+                    cityNameInput.value = "";
+                    latitudeInput.value = "";
+                    longitudeInput.value = "";        
+                }
+            });
+        
+            // Attach listener for Enter key to fetch weather
+            cityNameInput.addEventListener("keypress", function(event) {
+                if (event.key === "Enter") {
+                    event.preventDefault();
+                    fetchWeather();
+                }
+            });
+        
+            // Load cookies on page load
+            loadCookies();
+        });
+        
+        // ---- Helper Functions (Outside DOMContentLoaded) ----
+        
+        // Fetch suggestions for city input
+        function fetchSuggestions(query) {
+            if (query.length < 2) {
+                document.getElementById('suggestions').style.display = 'none';
+                return;
+            }
+            fetch('/suggestions?q=' + encodeURIComponent(query))
+                .then(response => response.json())
+                .then(data => {
+                    const suggestions = document.getElementById('suggestions');
+                    suggestions.innerHTML = '';
+                    if (data.length > 0) {
+                        suggestions.style.display = 'block';
+                        data.forEach(function(item) {
+                            const regions = [item.admin1, item.admin2, item.admin3, item.admin4]
+                                .filter(region => region && region.trim().length > 0)
+                                .join(', ');
+                            const fullName = item.name + (regions ? ', ' + regions : '') + ', ' + item.country;
+        
+                            const li = document.createElement('li');
+                            li.textContent = fullName;
+                            li.onclick = function() {
+                                document.getElementById("city").value = fullName;
+                                document.getElementById("latitude").value = item.latitude;
+                                document.getElementById("longitude").value = item.longitude;
+                                suggestions.style.display = 'none';
+                            };
+                            suggestions.appendChild(li);
+                        });
+                    } else {
+                        suggestions.style.display = 'none';
+                    }
+                })
+                .catch(console.error);
         }
-    });
-    </script>
+        
+        // Fetch weather data
+        function fetchWeather() {
+            const cityNameInput = document.getElementById("city");
+            const latitudeInput = document.getElementById("latitude");
+            const longitudeInput = document.getElementById("longitude");
+            const forecastDetails = document.getElementById("forecastDetails");
+            const weatherResult = document.getElementById("weatherResult");
+        
+            if (!cityNameInput.value.includes(", ")) {
+                alert("Please select a valid suggestion from the list");
+                return;
+            }
+            const cityName = cityNameInput.value;
+            if (cityName.length < 2) {
+                alert("Please enter a city name with at least 2 characters.");
+                return;
+            }
+            const latitude = latitudeInput.value;
+            const longitude = longitudeInput.value;
+            if (!latitude || !longitude || isNaN(latitude) || isNaN(longitude)) {
+                alert("Please select a valid suggestion from the list");
+                return;
+            }
+        
+            const shortName = cityName.split(",")[0].trim();
+            const country = cityName.split(",").slice(-1)[0].trim();
+        
+            forecastDetails.textContent = shortName + ", " + country + "  |  lat: " + latitude + ", lon: " + longitude;
+            forecastDetails.style.display = "block";
+        
+            fetch("/weather?lat=" + encodeURIComponent(latitude) + "&lon=" + encodeURIComponent(longitude))
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error("Error fetching weather data: " + response.statusText);
+                    }
+                    return response.text();
+                })
+                .then(data => {
+                    weatherResult.textContent = data;
+                })
+                .catch(error => {
+                    console.error(error);
+                    alert("Failed to fetch weather data. Please try again later.");
+                });
+        
+            const maxAge = "max-age=" + (365 * 24 * 60 * 60);
+            document.cookie = "cityName=" + encodeURIComponent(shortName + ", " + country) + "; path=/; " + maxAge;
+            document.cookie = "latitude=" + encodeURIComponent(latitude) + "; path=/; " + maxAge;
+            document.cookie = "longitude=" + encodeURIComponent(longitude) + "; path=/; " + maxAge;
+        }
+        
+        // Load cookies into inputs on page load
+        function loadCookies() {
+            const cookies = document.cookie.split("; ");
+            const cookieMap = {};
+            cookies.forEach(cookie => {
+                const [key, value] = cookie.split("=");
+                cookieMap[key] = decodeURIComponent(value);
+            });
+        
+            const cityNameInput = document.getElementById("city");
+            const latitudeInput = document.getElementById("latitude");
+            const longitudeInput = document.getElementById("longitude");
+        
+            if (cookieMap.cityName) {
+                cityNameInput.value = cookieMap.cityName;
+            }
+            if (cookieMap.latitude) {
+                latitudeInput.value = cookieMap.latitude;
+            }
+            if (cookieMap.longitude) {
+                longitudeInput.value = cookieMap.longitude;
+            }
+        }
+        </script>        
 </body>
 </html>
