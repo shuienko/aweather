@@ -18,6 +18,8 @@ type DataPoint struct {
 	WindGusts         float64
 	Seeing            float64
 	WindSpeed200hPa   float64
+	Lat               float64
+	Lon               float64
 }
 
 type DataPoints []DataPoint
@@ -76,7 +78,27 @@ func (dp DataPoints) Print() string {
 			if currentDate != "" {
 				out += "\n"
 			}
+			// Get Moon and Sun rise and set time
+			moonRise, moonSet := calculateMoonRiseSet(point.Time, point.Lat, point.Lon)
+			sunRise, sunSet := calculateSunRiseSet(point.Time, point.Lat, point.Lon)
+
+			// Format for Moon
+			moonRiseString := moonRise.Format("15:04")
+			moonSetString := moonSet.Format("15:04")
+
+			// Handle spacial cases when Moon is not rising or setting on that day
+			if moonRise.Day() != point.Time.Day() {
+				moonRiseString = "no"
+			}
+
+			if moonSet.Day() != point.Time.Day() {
+				moonSetString = "no"
+			}
+
+			// Print out results
 			out += fmt.Sprintf("%s - %s\n", date, dayOfWeek)
+			out += fmt.Sprintf("Moon: %s - %s | Sun: %s - %s\n", moonRiseString, moonSetString, sunRise.Format("15:04"), sunSet.Format("15:04"))
+			out += "-----------------------------------------------------------------------\n"
 			out += " Hour | Ok? | Temp  | Moon  | Low | Mid  | High | Wind  | Gusts | Seeing \n"
 			out += "-----|-----|-------|-------|-----|------|------|-------|-------|-------\n"
 			currentDate = date

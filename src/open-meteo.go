@@ -176,6 +176,8 @@ func (data OpenMeteoAPIResponse) Points() DataPoints {
 			HighClouds:        data.Hourly.CloudCoverHigh[i],
 			WindSpeed:         data.Hourly.WindSpeed10M[i],
 			WindGusts:         data.Hourly.WindGusts10M[i],
+			Lat:               data.Latitude,
+			Lon:               data.Longitude,
 		}
 
 		points = append(points, point)
