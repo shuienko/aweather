@@ -3,14 +3,15 @@ Weather for Astrophotographers
 
 ## About
 
-This project is the result of my long time struggle to find clean weather forecast for astrophotography.
-The one that gives simple answer to the simple question: "Is weather good for astrophotography tonight/next 3 hours/tomorrow/etc.?"
+This site comes from my long-time struggle to find a clean, no-nonsense weather forecast for astrophotography.
 
-So here it is. Ultra-minimalistic weather forecast for astrophotographers. 
+I wanted something that answers one simple question: "Is the weather good for astrophotography tonight, in the next 3 hours, or tomorrow?"
 
-No humidity, no precipitation, no pressure or dew point. 
-Just cloud cover and wind speed. And a clear status Good/Bad. 
-From my experience this is all that matters.
+So, here it is – an ultra-minimalist weather forecast built specifically for astrophotographers. 
+
+No humidity, no precipitation, no pressure, or dew point to fuss over.
+
+Just cloud cover, wind speed, and a simple "ok" when conditions are good. From my experience, that's all that really matters.
 
 All information comes from [Open-Meteo.com](https://open-meteo.com/) API.
 

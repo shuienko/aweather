@@ -1,5 +1,9 @@
 github.com/allegro/bigcache/v3 v3.1.0 h1:H2Vp8VOvxcrB91o86fUSVJFqeuz8kpyyB02eH3bSzwk=
 github.com/allegro/bigcache/v3 v3.1.0/go.mod h1:aPyh7jEvrog9zAwx5N7+JUQX5dZTSGpxF1LAR4dr35I=
+github.com/hablullah/go-juliandays v1.0.1-0.20220316153050-f56193695a5b h1:Qp6WC5idnPxaUQpX50s+1jrrjIqaCSuCu2BkQgGx/tQ=
+github.com/hablullah/go-juliandays v1.0.1-0.20220316153050-f56193695a5b/go.mod h1:0JOYq4oFOuDja+oospuc61YoX+uNEn7Z6uHYTbBzdGc=
+github.com/hablullah/go-sampa v1.0.0 h1:8SiiPC7LktYsBYkoitGGPRL416TDXjkECRZsAkUbgy4=
+github.com/hablullah/go-sampa v1.0.0/go.mod h1:NgDnpqL95HgRPkal510TVk7tI6+aLwO3wJgoj0dQ4Pc=
 github.com/soniakeys/meeus/v3 v3.0.1 h1:inZIhWUeyumGoQ//CCZMI4qR2vPKCS6LbVPca2mDvqE=
 github.com/soniakeys/meeus/v3 v3.0.1/go.mod h1:G1tkqa+QcOyErSe7WqN0OnzVeLrvq9bQBoNb1IG+3n8=
 github.com/soniakeys/sexagesimal v1.0.0 h1:p4OW7ID1naq0+k0Sn/gvuS2hRgmEcuJrZeyyntOGLvU=
