@@ -98,6 +98,7 @@ func (dp DataPoints) Print() string {
 			// Print out results
 			out += fmt.Sprintf("%s - %s\n", date, dayOfWeek)
 			out += fmt.Sprintf("Moon: %s - %s | Sun: %s - %s\n", moonRiseString, moonSetString, sunRise.Format("15:04"), sunSet.Format("15:04"))
+			out += "-----------------------------------------------------------------------\n"
 			out += " Hour | Ok? | Temp  | Moon  | Low | Mid  | High | Wind  | Gusts | Seeing \n"
 			out += "-----|-----|-------|-------|-----|------|------|-------|-------|-------\n"
 			currentDate = date
