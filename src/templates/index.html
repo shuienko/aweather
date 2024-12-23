@@ -205,11 +205,6 @@ Just cloud cover and wind speed. And a clear status "ok" when everything is fine
 
         const shortName = cityName.split(",")[0].trim();
         const country = cityName.split(",").slice(-1)[0].trim();
-        
-        // Save city name, latitude, and longitude in cookies (encoded)
-        document.cookie = "cityName=" + encodeURIComponent(shortName + ", " + country) + "; path=/";
-        document.cookie = "latitude=" + encodeURIComponent(latitude) + "; path=/";
-        document.cookie = "longitude=" + encodeURIComponent(longitude) + "; path=/";
 
         // Display forecast details
         const forecastDetails = document.getElementById("forecastDetails");
@@ -231,6 +226,14 @@ Just cloud cover and wind speed. And a clear status "ok" when everything is fine
                 console.error(error);
                 alert("Failed to fetch weather data. Please try again later.");
             });
+
+        // Set cookies
+        const maxAge = "max-age=" + (365 * 24 * 60 * 60);  // 365 days in seconds
+
+        // Save city name, latitude, and longitude in cookies (encoded)
+        document.cookie = "cityName=" + encodeURIComponent(shortName + ", " + country) + "; path=/; " + maxAge;
+        document.cookie = "latitude=" + encodeURIComponent(latitude) + "; path=/; " + maxAge;
+        document.cookie = "longitude=" + encodeURIComponent(longitude) + "; path=/; " + maxAge;
     }
 
     // Decode cookie values and populate the input fields
