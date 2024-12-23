@@ -15,13 +15,13 @@ const (
 	OpenMeteoAPIParams      = "temperature_2m,cloud_cover_low,cloud_cover_mid,cloud_cover_high,wind_speed_10m,wind_gusts_10m,wind_speed_200hPa,temperature_500hPa"
 	MaxCloudCover           = 25               // percentage
 	MaxWindSpeed            = 15               // km/h
-	cacheTTL                = 10 * time.Minute // cache TTL
+	CacheTTL                = 10 * time.Minute // cache TTL
 )
 
 var cache *bigcache.BigCache
 
 func main() {
-	cache, _ = bigcache.New(context.Background(), bigcache.DefaultConfig(cacheTTL))
+	cache, _ = bigcache.New(context.Background(), bigcache.DefaultConfig(CacheTTL))
 
 	mux := http.NewServeMux()
 

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"net/url"
 	"strconv"
 )
 
@@ -84,28 +83,6 @@ func handleSuggestions(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, "Unable to fetch suggestions", http.StatusInternalServerError)
 		return
-	}
-
-	// If a suggestion is selected, save it in cookies
-	if len(suggestions) > 0 {
-		selected := suggestions[0] // Assuming the first result is selected by default
-
-		// Save cookies for city name, latitude, and longitude
-		http.SetCookie(w, &http.Cookie{
-			Name:  "cityName",
-			Value: url.QueryEscape(selected.Name),
-			Path:  "/",
-		})
-		http.SetCookie(w, &http.Cookie{
-			Name:  "latitude",
-			Value: fmt.Sprintf("%f", selected.Lat),
-			Path:  "/",
-		})
-		http.SetCookie(w, &http.Cookie{
-			Name:  "longitude",
-			Value: fmt.Sprintf("%f", selected.Lon),
-			Path:  "/",
-		})
 	}
 
 	w.Header().Set("Content-Type", "application/json")
