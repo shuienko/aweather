@@ -1,0 +1,4 @@
+User-agent: *
+Disallow: /suggestions
+Disallow: /weather
+Disallow: /static

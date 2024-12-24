@@ -31,11 +31,11 @@ func main() {
 	// Define all routes
 	mux.HandleFunc("/weather", handleWeather)
 	mux.HandleFunc("/suggestions", handleSuggestions)
-	mux.HandleFunc("/favicon.ico", handleFavicon)
+	mux.HandleFunc("/robots.txt", handleRobots)
 
 	// Use a custom NotFound handler for unknown routes and handleIndex
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/" && r.URL.Path != "/weather" && r.URL.Path != "/suggestions" && r.URL.Path != "/favicon.ico" {
+		if r.URL.Path != "/" && r.URL.Path != "/weather" && r.URL.Path != "/suggestions" && r.URL.Path != "/robots.txt" {
 			http.NotFound(w, r)
 			return
 		}

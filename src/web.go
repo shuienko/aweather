@@ -89,6 +89,20 @@ func handleSuggestions(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(suggestions)
 }
 
+func handleRobots(w http.ResponseWriter, r *http.Request) {
+	log.Printf("INFO: From: %s | User-Agent: %s | Path: %s", r.RemoteAddr, r.UserAgent(), r.URL.Path)
+
+	robotsTxtFile, _ := StaticFiles.ReadFile("static/robots.txt")
+	contentType := "text/plain"
+
+	w.Header().Set("Content-Type", contentType)
+	w.WriteHeader(http.StatusOK)
+	_, err := w.Write(robotsTxtFile)
+	if err != nil {
+		log.Printf("ERROR: Could not write favicon: %v", err)
+	}
+}
+
 func handleFavicon(w http.ResponseWriter, r *http.Request) {
 	faviconPath := r.URL.Path
 
