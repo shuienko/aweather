@@ -147,6 +147,7 @@ At the top:    - rise & set time for Moon and Sun
             // Attach keydown listener to cityNameInput
             cityNameInput.addEventListener("keydown", function(event) {
                 if (event.key === "Backspace") {
+                    event.preventDefault();
                     cityNameInput.value = "";
                     latitudeInput.value = "";
                     longitudeInput.value = "";        
