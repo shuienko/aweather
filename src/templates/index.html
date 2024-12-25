@@ -150,6 +150,8 @@ At the top:    - rise & set time for Moon and Sun
                 cityNameInput.value = "";
                 latitudeInput.value = "";
                 longitudeInput.value = "";
+                document.getElementById('suggestions').style.display = 'none';
+                clearTimeout(debounceTimer);
             }
             });
         
@@ -172,10 +174,13 @@ At the top:    - rise & set time for Moon and Sun
         function fetchSuggestions(query) {
             clearTimeout(debounceTimer);
             debounceTimer = setTimeout(() => {
-            if (query.length < 2) {
+
+            // Immediately return if the input is empty
+            if (!query || query.length < 2) {
                 document.getElementById('suggestions').style.display = 'none';
                 return;
             }
+
             fetch('/suggestions?q=' + encodeURIComponent(query))
                 .then(response => response.json())
                 .then(data => {
