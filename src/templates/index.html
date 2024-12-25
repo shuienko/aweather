@@ -18,6 +18,7 @@
             text-align: center;
         }
         .forecast-details {
+            font-weight: bold;
             text-align: center;
             margin-top: 20px;
             font-size: 1.2rem;
@@ -64,7 +65,7 @@
 </head>
 <body>
     <div class="uk-container uk-margin-top">
-        <h1 class="uk-heading-divider forecast-header">Weather for Astrophotographers</h1>
+        <h2 class="uk-heading-divider forecast-header">Weather for Astrophotographers</h2>
         
         <div class="uk-grid-small uk-flex-middle" uk-grid>
             <div class="uk-width-expand">
@@ -88,8 +89,8 @@
 
         <div class="forecast-about-container">
             <pre class="forecast-about">
-                <h4>About</h3>
-This site comes from my long-time struggle to find a clean, no-nonsense weather forecast for astrophotography.
+                <h3>About</h3>
+This website comes from my long-time struggle to find a clean, no-nonsense weather forecast for astrophotography.
 I wanted something that answers one simple question: <b>"Is the weather good for astrophotography tonight, in the next 3 hours, or tomorrow?"</b>                    
 So, here it is – an ultra-minimalist weather forecast built specifically for astrophotographers. No humidity, no precipitation, no pressure, or dew point to fuss over.
 Just cloud cover, wind speed, and a simple "ok" when conditions are good. From my experience, that's all that really matters.
@@ -98,7 +99,7 @@ Just cloud cover, wind speed, and a simple "ok" when conditions are good. From m
 
         <div class="forecast-legend-container">
             <pre class="forecast-legend">
-                <h4>Table</h3>
+                <h3>Table</h3>
 Hour           - time of the day
 Ok?            - weather status. "ok" means cloud cover is below 25%% and wind speed is below 15 km/h
 Temp           - temperature in Celsius
@@ -114,7 +115,7 @@ At the top:    - rise & set time for Moon and Sun
 
         <div class=forecast-legend-container>
             <pre class=forecast-legend>
-                <h4>Contact & Links</h3>
+                <h3>Contact & Links</h3>
 - All information comes from <a href="https://open-meteo.com/">Open-Meteo.com</a> API.
 - Source code is available on <a href="https://github.com/shuienko/aweather.info">GitHub</a>. Pull requests are welcome.
 - For any questions, suggestions or feedback please contact me via email: <b>contact@aweather.info</b>
@@ -167,7 +168,10 @@ At the top:    - rise & set time for Moon and Sun
         // ---- Helper Functions (Outside DOMContentLoaded) ----
         
         // Fetch suggestions for city input
+        let debounceTimer;
         function fetchSuggestions(query) {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
             if (query.length < 2) {
                 document.getElementById('suggestions').style.display = 'none';
                 return;
@@ -200,6 +204,7 @@ At the top:    - rise & set time for Moon and Sun
                     }
                 })
                 .catch(console.error);
+            }, 300);
         }
         
         // Fetch weather data
