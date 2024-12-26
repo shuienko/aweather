@@ -23,27 +23,35 @@ type OpenMeteoAPIResponse struct {
 }
 
 type Hourly struct {
-	Time              []string  `json:"time"`
-	Temperature2M     []float64 `json:"temperature_2m"`
-	Temperature500hPa []float64 `json:"temperature_500hPa"`
-	CloudCoverLow     []int64   `json:"cloud_cover_low"`
-	CloudCoverMid     []int64   `json:"cloud_cover_mid"`
-	CloudCoverHigh    []int64   `json:"cloud_cover_high"`
-	WindSpeed10M      []float64 `json:"wind_speed_10m"`
-	WindGusts10M      []float64 `json:"wind_gusts_10m"`
-	WindSpeed200hPa   []float64 `json:"wind_speed_200hPa"`
+	Time                  []string  `json:"time"`
+	Temperature2M         []float64 `json:"temperature_2m"`
+	Temperature500hPa     []float64 `json:"temperature_500hPa"`
+	Temperature850hPa     []float64 `json:"temperature_850hPa"`
+	CloudCoverLow         []int64   `json:"cloud_cover_low"`
+	CloudCoverMid         []int64   `json:"cloud_cover_mid"`
+	CloudCoverHigh        []int64   `json:"cloud_cover_high"`
+	WindSpeed10M          []float64 `json:"wind_speed_10m"`
+	WindGusts10M          []float64 `json:"wind_gusts_10m"`
+	WindSpeed200hPa       []float64 `json:"wind_speed_200hPa"`
+	WindSpeed850hPa       []float64 `json:"wind_speed_850hPa"`
+	GeopotentialHeight850 []float64 `json:"geopotential_height_850hPa"`
+	GeopotentialHeight500 []float64 `json:"geopotential_height_500hPa"`
 }
 
 type HourlyUnits struct {
-	Time              string `json:"time"`
-	Temperature2M     string `json:"temperature_2m"`
-	Temperature500hPa string `json:"temperature_500hPa"`
-	CloudCoverLow     string `json:"cloud_cover_low"`
-	CloudCoverMid     string `json:"cloud_cover_mid"`
-	CloudCoverHigh    string `json:"cloud_cover_high"`
-	WindSpeed10M      string `json:"wind_speed_10m"`
-	WindGusts10M      string `json:"wind_gusts_10m"`
-	WindSpeed200hPa   string `json:"wind_speed_200hPa"`
+	Time                  string `json:"time"`
+	Temperature2M         string `json:"temperature_2m"`
+	Temperature500hPa     string `json:"temperature_500hPa"`
+	Temperature850hPa     string `json:"temperature_850hPa"`
+	CloudCoverLow         string `json:"cloud_cover_low"`
+	CloudCoverMid         string `json:"cloud_cover_mid"`
+	CloudCoverHigh        string `json:"cloud_cover_high"`
+	WindSpeed10M          string `json:"wind_speed_10m"`
+	WindGusts10M          string `json:"wind_gusts_10m"`
+	WindSpeed200hPa       string `json:"wind_speed_200hPa"`
+	WindSpeed850hPa       string `json:"wind_speed_850hPa"`
+	GeopotentialHeight850 string `json:"geopotential_height_850hPa"`
+	GeopotentialHeight500 string `json:"geopotential_height_500hPa"`
 }
 
 type Suggestion struct {
@@ -167,17 +175,21 @@ func (data OpenMeteoAPIResponse) Points() DataPoints {
 		time, _ := time.ParseInLocation("2006-01-02T15:04", data.Hourly.Time[i], location)
 
 		point := DataPoint{
-			Time:              time,
-			Temperature2M:     data.Hourly.Temperature2M[i],
-			Temperature500hPa: data.Hourly.Temperature500hPa[i],
-			WindSpeed200hPa:   data.Hourly.WindSpeed200hPa[i],
-			LowClouds:         data.Hourly.CloudCoverLow[i],
-			MidClouds:         data.Hourly.CloudCoverMid[i],
-			HighClouds:        data.Hourly.CloudCoverHigh[i],
-			WindSpeed:         data.Hourly.WindSpeed10M[i],
-			WindGusts:         data.Hourly.WindGusts10M[i],
-			Lat:               data.Latitude,
-			Lon:               data.Longitude,
+			Time:                  time,
+			Temperature2M:         data.Hourly.Temperature2M[i],
+			Temperature500hPa:     data.Hourly.Temperature500hPa[i],
+			Temperature850hPa:     data.Hourly.Temperature850hPa[i],
+			WindSpeed200hPa:       data.Hourly.WindSpeed200hPa[i],
+			WindSpeed850hPa:       data.Hourly.WindSpeed850hPa[i],
+			LowClouds:             data.Hourly.CloudCoverLow[i],
+			MidClouds:             data.Hourly.CloudCoverMid[i],
+			HighClouds:            data.Hourly.CloudCoverHigh[i],
+			WindSpeed:             data.Hourly.WindSpeed10M[i],
+			WindGusts:             data.Hourly.WindGusts10M[i],
+			GeopotentialHeight850: data.Hourly.GeopotentialHeight850[i],
+			GeopotentialHeight500: data.Hourly.GeopotentialHeight500[i],
+			Lat:                   data.Latitude,
+			Lon:                   data.Longitude,
 		}
 
 		points = append(points, point)
