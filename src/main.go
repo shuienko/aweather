@@ -12,7 +12,7 @@ import (
 const (
 	OpenMeteoAPIEndpoint    = "https://api.open-meteo.com/v1/forecast?"
 	OpenMeteoGeoAPIEndpoint = "https://geocoding-api.open-meteo.com/v1/search"
-	OpenMeteoAPIParams      = "temperature_2m,cloud_cover_low,cloud_cover_mid,cloud_cover_high,wind_speed_10m,wind_gusts_10m,wind_speed_200hPa,temperature_500hPa"
+	OpenMeteoAPIParams      = "temperature_2m,cloud_cover_low,cloud_cover_mid,cloud_cover_high,wind_speed_10m,wind_gusts_10m,wind_speed_200hPa,temperature_500hPa,temperature_850hPa,wind_speed_850hPa,geopotential_height_850hPa,geopotential_height_500hPa"
 	MaxCloudCover           = 25               // percentage
 	MaxWindSpeed            = 15               // km/h
 	CacheTTL                = 10 * time.Minute // cache TTL

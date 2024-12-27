@@ -7,19 +7,23 @@ import (
 )
 
 type DataPoint struct {
-	Time              time.Time
-	Temperature2M     float64
-	Temperature500hPa float64
-	LowClouds         int64
-	MidClouds         int64
-	HighClouds        int64
-	MoonIllum         int64
-	WindSpeed         float64
-	WindGusts         float64
-	Seeing            float64
-	WindSpeed200hPa   float64
-	Lat               float64
-	Lon               float64
+	Time                  time.Time
+	Temperature2M         float64
+	Temperature500hPa     float64
+	Temperature850hPa     float64
+	LowClouds             int64
+	MidClouds             int64
+	HighClouds            int64
+	MoonIllum             int64
+	WindSpeed             float64
+	WindGusts             float64
+	Seeing                float64
+	WindSpeed200hPa       float64
+	WindSpeed850hPa       float64
+	GeopotentialHeight850 float64
+	GeopotentialHeight500 float64
+	Lat                   float64
+	Lon                   float64
 }
 
 type DataPoints []DataPoint
@@ -50,19 +54,52 @@ func (dp DataPoints) setSeeing() DataPoints {
 	updatedPoints := DataPoints{}
 
 	for _, point := range dp {
-		// Calculate temperature gradient (°C/km)
-		// 5 km difference between surface and 500 hPa
-		tempGradient := (point.Temperature2M - point.Temperature500hPa) / 5.0
+		// Threshold and Sensitivity.
+		// Jet stream penalties are applied only if wind speeds exceed <jetStreamThreshold> m/s at 200 hPa.
+		jetStreamThreshold := 15.0 // Jet stream speed threshold in m/s
+		jetStreamFactor := 0.03    // Sensitivity factor
 
-		// Approximate seeing using empirical formula
-		// ε ∝ V^0.6 * T_grad^0.4
-		point.Seeing = 0.1 * math.Pow(point.WindSpeed200hPa/3.6, 0.6) * math.Pow(math.Abs(tempGradient), 0.4)
+		// Calculate temperature gradient (°C/km)
+		// ~3.5 km difference between 850 hPa (1.5 km) and 500 hPa (5 km)
+		// ~1.5 km difference between surface and 850 hPa (1.5 km)
+		// ~5 km gradient total
+
+		// Calculate height difference dynamically
+		heightDiff := point.GeopotentialHeight500 - point.GeopotentialHeight850
+
+		// Gradient between surface and 850 hPa (1.5 km approx)
+		lowGradient := (point.Temperature2M - point.Temperature850hPa) / (point.GeopotentialHeight850 / 1000.0)
+
+		// Gradient between 850 hPa and 500 hPa (3.5 km approx)
+		midGradient := (point.Temperature850hPa - point.Temperature500hPa) / (heightDiff / 1000.0)
+
+		// Combine gradients
+		tempGradient := lowGradient + midGradient
+
+		// High wind shear (difference in wind speeds between altitudes) increases turbulence
+		windShear := math.Abs(point.WindSpeed200hPa/3.6-point.WindSpeed/3.6) + math.Abs(point.WindSpeed/3.6-point.WindSpeed850hPa/3.6)
+
+		// Approximate seeing using empirical formula: ε ∝ V^0.6 * T_grad^0.4
+		// 0.12 coefficient set to be less optimistic
+		point.Seeing = 0.12 * math.Pow(windShear, 0.6) * math.Pow(math.Abs(tempGradient), 0.4)
+
+		// Jet stream impact (penalize if above threshold)
+		if point.WindSpeed200hPa/3.6 > jetStreamThreshold {
+			point.Seeing *= 1 + jetStreamFactor*(point.WindSpeed200hPa/3.6-jetStreamThreshold)
+		}
+
+		// Richardson Number (Ri) to estimate turbulence
+		Ri := tempGradient / math.Pow(point.WindSpeed/3.6, 2)
+		if Ri < 0.25 {
+			point.Seeing *= 1.5
+		} else if Ri < 0.5 {
+			point.Seeing *= 1.2
+		}
 
 		updatedPoints = append(updatedPoints, point)
 	}
 
 	return updatedPoints
-
 }
 
 // Print() returns Markdown string which represents DataPoints
