@@ -28,11 +28,28 @@
     		white-space: nowrap;
 			text-align: center;
 		}
+        @media (max-width: 560px) {
+            .forecast-table-container pre {
+                font-size: 0.6rem;
+            }
+        }
 		.forecast-legend-container {
     		overflow-x: auto;
     		white-space: nowrap;
 			text-align: left;
 		}
+        .forecast-legend-container pre b, 
+        .forecast-legend-container pre strong {
+            color: #007bff;  /* Blue color */
+            font-family: inherit;  /* Keep the same monospace font */
+            font-weight: normal;
+        }
+        @media (max-width: 560px) {
+            .forecast-legend-container pre {
+                white-space: pre-wrap;
+                word-wrap: break-word;
+            }
+        }
         .forecast-legend {
 			display: inline-block;
             border: none;
@@ -100,27 +117,27 @@ Just cloud cover, wind speed, and a simple "ok" when conditions are good. From m
         <div class="forecast-legend-container">
             <pre class="forecast-legend">
                 <h3>Table</h3>
-Hour           - time of the day
-Ok?            - weather status. "ok" means cloud cover is below 25%% and wind speed is below 15 km/h
-Temp           - temperature in Celsius
-Moon           - Moon illumination percentage
-Low, Mid, High - cloud cover percentage at different altitudes
-Wind           - wind speed in km/h
-Gusts          - wind gusts in km/h
-Seeing         - seeing conditions in arcseconds
+<b>| Hour</b>           - time of the day
+<b>| Ok?</b>            - weather status. "ok" means cloud cover is below 25%% and wind speed is below 15 km/h
+<b>| Temp</b>           - temperature in Celsius
+<b>| Moon</b>           - Moon illumination percentage
+<b>| Low, Mid, High</b> - cloud cover percentage at different altitudes
+<b>| Wind</b>           - wind speed in km/h
+<b>| Gusts</b>          - wind gusts in km/h
+<b>| Seeing</b>         - seeing conditions in arcseconds
 
-At the top:    - rise & set time for Moon and Sun
+<b>| At the top:</b>    - rise & set time for Moon and Sun
             </pre>
         </div>
 
         <div class=forecast-legend-container>
             <pre class=forecast-legend>
                 <h3>Contact & Links</h3>
-- All information comes from <a href="https://open-meteo.com/">Open-Meteo.com</a> API.
-- Source code is available on <a href="https://github.com/shuienko/aweather.info">GitHub</a>. Pull requests are welcome.
-- For any questions, suggestions or feedback please contact me via email: <b>contact@aweather.info</b>
-- My <a href="https://www.astrobin.com/users/maffei/">Astrobin</a> profile. It ain't much, but it's honest work. :-)
-- And if you like this page, please consider supporting me using the button below. Thank you!
+<b>|</b> All information comes from <a href="https://open-meteo.com/">Open-Meteo.com</a> API.
+<b>|</b> Source code is available on <a href="https://github.com/shuienko/aweather.info">GitHub</a>. Pull requests are welcome.
+<b>|</b> For any questions, suggestions or feedback please contact me via email: <b>contact@aweather.info</b>
+<b>|</b> My <a href="https://www.astrobin.com/users/maffei/">Astrobin</a> profile. It ain't much, but it's honest work. :-)
+<b>|</b> And if you like this page, please consider supporting me using the button below. Thank you!
             </pre>
         </div>
         
