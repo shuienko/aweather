@@ -256,7 +256,7 @@ Just cloud cover, wind speed, and a simple "ok" when conditions are good. From m
             const shortName = cityName.split(",")[0].trim();
             const country = cityName.split(",").slice(-1)[0].trim();
         
-            forecastDetails.textContent = shortName + ", " + country + "  |  lat: " + latitude + ", lon: " + longitude;
+            forecastDetails.textContent = shortName + ", " + country + "  |  " + latitude + ",  " + longitude;
             forecastDetails.style.display = "block";
         
             fetch("/weather?lat=" + encodeURIComponent(latitude) + "&lon=" + encodeURIComponent(longitude))
