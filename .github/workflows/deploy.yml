@@ -4,10 +4,35 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
+  test:
+    if: github.event_name == 'pull_request'
+    name: Run Go Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the code
+      - name: checkout
+        uses: actions/checkout@v4
+
+      # Set up Go
+      - name: setup go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '^1.23'
+
+      # Run Go tests
+      - name: run tests
+        run: |
+          go test ./...
+  
   deploy:
-    name: Deploy
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    name: Deploy aweather.info
     runs-on: ubuntu-latest
 
     steps:
