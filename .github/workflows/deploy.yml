@@ -1,4 +1,4 @@
-name: Deploy App
+name: aweather.info
 
 on:
   push:
@@ -11,7 +11,7 @@ on:
 jobs:
   test:
     if: github.event_name == 'pull_request'
-    name: Run Go Tests
+    name: Run Tests
     runs-on: ubuntu-latest
 
     steps:
@@ -28,11 +28,12 @@ jobs:
       # Run Go tests
       - name: run tests
         run: |
+          cd src
           go test ./...
   
   deploy:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    name: Deploy aweather.info
+    name: Deploy 
     runs-on: ubuntu-latest
 
     steps:
