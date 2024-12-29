@@ -22,7 +22,7 @@ jobs:
           go-version: '^1.23'
 
       # Run Go tests in the src folder
-      - name: run tests
+      - name: Go Test
         run: |
           cd src
           go test ./... -v
