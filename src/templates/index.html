@@ -78,6 +78,75 @@
             font-size: 0.9rem;
             color: #555;
         }
+        #suggestions {
+            max-height: 300px;
+            overflow-y: auto;
+            width: 100%;
+            border: 1px solid #e5e5e5;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin-top: 4px;
+            background: white;
+            list-style: none;
+            padding-left: 0;
+        }
+
+        /* Individual suggestion items */
+        #suggestions li {
+            padding: 10px 15px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background-color 0.2s ease;
+        }
+
+        #suggestions li:last-child {
+            border-bottom: none;
+        }
+
+        #suggestions li:hover {
+            background-color: #f8f8f8;
+        }
+
+        /* Custom scrollbar for modern browsers */
+        #suggestions::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #suggestions::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        #suggestions::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+
+        #suggestions::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+
+        /* Style for the input field to match suggestions */
+        #city {
+            border-radius: 4px;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        #city:focus {
+            border-color: #1e87f0;
+            box-shadow: 0 0 0 2px rgba(30, 135, 240, 0.1);
+            outline: none;
+        }
+
+        /* Animation for suggestions appearance */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        #suggestions {
+            animation: fadeIn 0.2s ease-out;
+        }
     </style>
 </head>
 <body>
@@ -87,7 +156,7 @@
         <div class="uk-grid-small uk-flex-middle" uk-grid>
             <div class="uk-width-expand">
                 <input class="uk-input" id="city" type="text" placeholder="e.g., London" value="%s" oninput="fetchSuggestions(this.value)">
-                <ul id="suggestions" class="uk-list uk-list-divider" style="position: absolute; z-index: 1000; background: white; display: none;"></ul>
+                <ul id="suggestions" style="position: absolute; z-index: 1000; background: rgb(238, 239, 252); display: none;"></ul>
             </div>
             <div>
                 <button class="uk-button uk-button-primary" onclick="fetchWeather()">Get Forecast</button>
@@ -171,6 +240,15 @@ Just cloud cover, wind speed, and a simple "ok" when conditions are good. "ok" m
                 clearTimeout(debounceTimer);
             }
             });
+
+            // Add click event listener to document to close suggestions when clicking outside
+            document.addEventListener('click', function(e) {
+                    const suggestions = document.getElementById('suggestions');
+                    const cityInput = document.getElementById('city');
+                    if (e.target !== cityInput && !suggestions.contains(e.target)) {
+                        suggestions.style.display = 'none';
+                    }
+            });
         
             // Attach listener for Enter key to fetch weather
             cityNameInput.addEventListener("keypress", function(event) {
@@ -194,7 +272,7 @@ Just cloud cover, wind speed, and a simple "ok" when conditions are good. "ok" m
 
             // Immediately return if the input is empty
             if (!query || query.length < 2) {
-                document.getElementById('suggestions').style.display = 'none';
+                suggestions.style.display = 'none';
                 return;
             }
 
@@ -213,11 +291,16 @@ Just cloud cover, wind speed, and a simple "ok" when conditions are good. "ok" m
         
                             const li = document.createElement('li');
                             li.textContent = fullName;
-                            li.onclick = function() {
+                            li.onclick = function(e) {
+                                e.stopPropagation(); // Prevent event bubbling
                                 document.getElementById("city").value = fullName;
                                 document.getElementById("latitude").value = item.latitude;
                                 document.getElementById("longitude").value = item.longitude;
                                 suggestions.style.display = 'none';
+                                clearTimeout(debounceTimer);
+
+                                // Automatically fetch forecast when city is selected
+                                fetchWeather();
                             };
                             suggestions.appendChild(li);
                         });
@@ -225,7 +308,10 @@ Just cloud cover, wind speed, and a simple "ok" when conditions are good. "ok" m
                         suggestions.style.display = 'none';
                     }
                 })
-                .catch(console.error);
+                .catch(error => {
+                    console.error('Error fetching suggestions:', error);
+                    suggestions.style.display = 'none';
+            });
             }, 300);
         }
         
