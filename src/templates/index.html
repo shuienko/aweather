@@ -229,6 +229,9 @@ Just cloud cover, wind speed, and a simple "ok" when conditions are good. "ok" m
                                 document.getElementById("longitude").value = item.longitude;
                                 suggestions.style.display = 'none';
                                 clearTimeout(debounceTimer);
+
+                                // Automatically fetch forecast when city is selected
+                                fetchWeather();
                             };
                             suggestions.appendChild(li);
                         });
