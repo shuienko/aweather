@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 //go:embed templates/index.html
@@ -74,6 +75,8 @@ func handleWeather(w http.ResponseWriter, r *http.Request) {
 
 func handleSuggestions(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query().Get("q")
+	query = strings.TrimSpace(query)
+
 	if query == "" {
 		http.Error(w, "Query parameter is missing", http.StatusBadRequest)
 		return
