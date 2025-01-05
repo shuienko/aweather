@@ -94,23 +94,23 @@ The `setSeeing` function, located in `datapoints.go`, enhances the weather forec
 #### What the Function Does
 The `setSeeing` function computes a value representing atmospheric turbulence, which can distort the quality of astronomical images. It uses meteorological data to approximate the level of turbulence at different altitudes by evaluating:
 
-- **Temperature Gradients** – Differences in temperature between various atmospheric layers (surface to 850 hPa and 850 hPa to 500 hPa).
-- **Wind Shear** – Variations in wind speed between the ground level, 850 hPa, and 200 hPa.
-- **Jet Stream Influence** – Penalizes seeing conditions when wind speeds at 200 hPa exceed a threshold (15 m/s by default).
-- **Richardson Number (Ri)** – A measure of atmospheric stability, further modifying the seeing value when turbulence increases.
+- **Temperature Gradients** – Differences in temperature between various atmospheric layers (surface to $850 hPa$ and $850 hPa$ to $500 hPa$).
+- **Wind Shear** – Variations in wind speed between the ground level, $850 hPa$, and $200 hPa$.
+- **Jet Stream Influence** – Penalizes seeing conditions when wind speeds at $200 hPa$ exceed a threshold ($15 m/s$ by default).
+- **Richardson Number ($Ri$)** – A measure of atmospheric stability, further modifying the seeing value when turbulence increases.
 
 #### How it Works
 1. **Temperature Gradients**  
    The function calculates the temperature difference between:
-   - Surface and 850 hPa (low altitude)
-   - 850 hPa and 500 hPa (mid-altitude)
+   - Surface and $850 hPa$ (low altitude)
+   - $850 hPa$ and $500 hPa$ (mid-altitude)
 
    These differences are used to derive a temperature gradient across approximately 5 km of the atmosphere.
 
 2. **Wind Shear Calculation**  
    Wind shear is computed by determining the absolute difference between:
-   - Wind speeds at 200 hPa and surface wind speed
-   - Surface wind speed and 850 hPa wind speed
+   - Wind speeds at $200 hPa$ and surface wind speed
+   - Surface wind speed and $850 hPa$ wind speed
 
 3. **Seeing Formula**  
    The formula to estimate seeing is:   $\epsilon \propto V^{0.6} \cdot T_{\text{grad}}^{0.4}$
