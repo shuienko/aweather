@@ -287,7 +287,8 @@ Just cloud cover, wind speed, and a simple "ok" when conditions are good. "ok" m
                             const regions = [item.admin1, item.admin2, item.admin3, item.admin4]
                                 .filter(region => region && region.trim().length > 0)
                                 .join(', ');
-                            const fullName = item.name + (regions ? ', ' + regions : '') + ', ' + item.country;
+                            const country = item.country && item.country.trim().length > 0 ? item.country : item.country_code;
+                            const fullName = item.name + (regions ? ', ' + regions : '') + ', ' + country;
         
                             const li = document.createElement('li');
                             li.textContent = fullName;

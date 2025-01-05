@@ -55,14 +55,15 @@ type HourlyUnits struct {
 }
 
 type Suggestion struct {
-	Name    string  `json:"name"`
-	Country string  `json:"country"`
-	Admin1  string  `json:"admin1"`
-	Admin2  string  `json:"admin2"`
-	Admin3  string  `json:"admin3"`
-	Admin4  string  `json:"admin4"`
-	Lat     float64 `json:"latitude"`
-	Lon     float64 `json:"longitude"`
+	Name        string  `json:"name"`
+	Country     string  `json:"country"`
+	CountryCode string  `json:"country_code"`
+	Admin1      string  `json:"admin1"`
+	Admin2      string  `json:"admin2"`
+	Admin3      string  `json:"admin3"`
+	Admin4      string  `json:"admin4"`
+	Lat         float64 `json:"latitude"`
+	Lon         float64 `json:"longitude"`
 }
 
 // FetchData() goes to OpenMeteoEndpoint makes HTTPS request and stores result as OpenMeteoAPIResponse object
