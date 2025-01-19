@@ -35,10 +35,22 @@ func main() {
 	mux.HandleFunc("/weather", handleWeather)
 	mux.HandleFunc("/suggestions", handleSuggestions)
 	mux.HandleFunc("/robots.txt", handleRobots)
+	mux.HandleFunc("/favicon.ico", handleFavicon)
 
 	// Use a custom NotFound handler for unknown routes and handleIndex
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/" && r.URL.Path != "/weather" && r.URL.Path != "/suggestions" && r.URL.Path != "/robots.txt" {
+
+		// List of allowed Paths
+		allowedPaths := map[string]bool{
+			"/":            true,
+			"/weather":     true,
+			"/suggestions": true,
+			"/robots.txt":  true,
+			"/favicon.ico": true,
+		}
+
+		// For anything "unusual" return 404
+		if !allowedPaths[r.URL.Path] {
 			http.NotFound(w, r)
 			return
 		}

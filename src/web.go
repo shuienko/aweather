@@ -102,50 +102,21 @@ func handleRobots(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	_, err := w.Write(robotsTxtFile)
 	if err != nil {
-		log.Printf("ERROR: Could not write favicon: %v", err)
+		log.Printf("ERROR: Could not write robots.txt: %v", err)
 	}
 }
 
 func handleFavicon(w http.ResponseWriter, r *http.Request) {
-	faviconPath := r.URL.Path
+	log.Printf("INFO: From: %s | User-Agent: %s | Path: %s", r.RemoteAddr, r.UserAgent(), r.URL.Path)
 
-	var faviconFile []byte
-	var contentType string
-
-	switch faviconPath {
-	case "/static/favicon.ico":
-		faviconFile, _ = StaticFiles.ReadFile("static/favicon.ico")
-		contentType = "image/x-icon"
-	case "/static/favicon-16x16.png":
-		faviconFile, _ = StaticFiles.ReadFile("static/favicon-16x16.png")
-		contentType = "image/png"
-	case "/static/favicon-32x32.png":
-		faviconFile, _ = StaticFiles.ReadFile("static/favicon-32x32.png")
-		contentType = "image/png"
-	case "/static/apple-touch-icon.png":
-		faviconFile, _ = StaticFiles.ReadFile("static/apple-touch-icon.png")
-		contentType = "image/png"
-	case "/static/favicon-192x192.png":
-		faviconFile, _ = StaticFiles.ReadFile("static/favicon-192x192.png")
-		contentType = "image/png"
-	case "/static/favicon-512x512.png":
-		faviconFile, _ = StaticFiles.ReadFile("static/favicon-512x512.png")
-		contentType = "image/png"
-	default:
-		http.NotFound(w, r)
-		return
-	}
-
-	if len(faviconFile) == 0 {
-		http.Error(w, "Favicon not found", http.StatusNotFound)
-		return
-	}
+	faviconFile, _ := StaticFiles.ReadFile("static/favicon.ico")
+	contentType := "image/x-icon"
 
 	w.Header().Set("Content-Type", contentType)
 	w.WriteHeader(http.StatusOK)
 	_, err := w.Write(faviconFile)
 	if err != nil {
-		log.Printf("ERROR: Could not write favicon: %v", err)
+		log.Printf("ERROR: Could not write favicon.ico: %v", err)
 	}
 }
 
