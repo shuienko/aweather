@@ -69,7 +69,7 @@ func TestHandleRobots(t *testing.T) {
 }
 
 func TestHandleFavicon(t *testing.T) {
-	req := httptest.NewRequest(http.MethodGet, "/static/favicon.ico", nil)
+	req := httptest.NewRequest(http.MethodGet, "/favicon.ico", nil)
 	rec := httptest.NewRecorder()
 
 	handleFavicon(rec, req)
