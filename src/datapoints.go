@@ -125,18 +125,18 @@ func (dp DataPoints) Print() string {
 
 			// Handle spacial cases when Moon is not rising or setting on that day
 			if moonRise.Day() != point.Time.Day() {
-				moonRiseString = "no"
+				moonRiseString = moonRiseString + "*"
 			}
 
 			if moonSet.Day() != point.Time.Day() {
-				moonSetString = "no"
+				moonSetString = moonSetString + "*"
 			}
 
 			// Print out results
 			out += fmt.Sprintf("%s - %s\n", date, dayOfWeek)
-			out += fmt.Sprintf("Moon: %s - %s | Sun: %s - %s\n", moonRiseString, moonSetString, sunRise.Format("15:04"), sunSet.Format("15:04"))
+			out += fmt.Sprintf("moon: %s - %s | sun: %s - %s\n", moonRiseString, moonSetString, sunRise.Format("15:04"), sunSet.Format("15:04"))
 			out += "-----------------------------------------------------------------------\n"
-			out += " Hour | Ok? | Temp  | Moon  | Low | Mid  | High | Wind  | Gusts | Seeing \n"
+			out += " hour | ok? | temp  | moon  | low | mid  | high | wind  | gusts | seeing \n"
 			out += "-----|-----|-------|-------|-----|------|------|-------|-------|-------\n"
 			currentDate = date
 		}
