@@ -96,7 +96,7 @@ The `setSeeing` function computes a value representing atmospheric turbulence, w
 
 - **Temperature Gradients** – Differences in temperature between various atmospheric layers (surface to $850 hPa$ and $850 hPa$ to $500 hPa$).
 - **Wind Shear** – Variations in wind speed between the ground level, $850 hPa$, and $200 hPa$.
-- **Jet Stream Influence** – Penalizes seeing conditions when wind speeds at $200 hPa$ exceed a threshold ($15 m/s$ by default).
+- **Jet Stream Influence** – Penalizes seeing conditions when wind speeds at $200 hPa$ exceed a threshold (15 m/s by default).
 - **Richardson Number ($Ri$)** – A measure of atmospheric stability, further modifying the seeing value when turbulence increases.
 
 #### How it Works
@@ -119,7 +119,7 @@ The `setSeeing` function computes a value representing atmospheric turbulence, w
     * $V$ : Wind speed at $200–300 hPa$ (jet stream).
     * $T_{\text{grad}}$ : Temperature gradient between ground and upper atmosphere.
 4. **Jet Stream Adjustment**  
-   If wind speeds at $200 hPa$ surpass $15 m/s$, the seeing value is penalized proportionally, representing increased turbulence due to jet streams.
+   If wind speeds at $200 hPa$ surpass 15 m/s, the seeing value is penalized proportionally, representing increased turbulence due to jet streams.
 
 5. **Richardson Number Adjustment**  
    The Richardson Number ($Ri$) is calculated by dividing the temperature gradient by the square of the wind speed.  
