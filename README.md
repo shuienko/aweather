@@ -1,88 +1,117 @@
-# [aweather.info](https://aweather.info)
+# 🌟 [aweather.info](https://aweather.info)
 
 <p align="center">
   <img src="https://github.com/shuienko/aweather.info/blob/main/src/static/favicon-192x192.png?raw=true" alt="Logo" width="192"/>
 </p>
 
 <p align="center">
-    <b>Weather forecast for astrophotographers</b>
+    <b>🔭 Weather forecast for astrophotographers 🌙</b>
 </p>
 
+## 🌌 Why This Exists
 
-## Overview
+Ever spent hours planning the perfect astrophotography session, only to discover the "clear skies" forecast didn't account for high-altitude clouds ruining your shots? Yeah, me too. 😤
 
-This project comes from my long-time struggle to find a clean, no-nonsense weather forecast for astrophotography.
+Most weather apps are designed for people who want to know if they need an umbrella. We need to know if the atmosphere will cooperate with our telescopes and cameras.
 
-I wanted something that answers one simple question: "Is the weather good for astrophotography tonight, in the next 3 hours, or tomorrow?"
+**The Mission**: Answer one simple question with scientific precision:
+> *"Will tonight be good for astrophotography?"*
 
-So, here it is – an ultra-minimalist weather forecast built specifically for astrophotographers. 
+No more scrolling through humidity percentages, dew points, or precipitation chances that don't matter when you're pointing a camera at the stars. Just the essentials: **cloud cover**, **wind speed**, **atmospheric seeing**, and a satisfying **"OK"** when conditions align. ✨
 
-No humidity, no precipitation, no pressure, or dew point to fuss over.
+Built with real meteorological data from [Open-Meteo.com](https://open-meteo.com/) and actual atmospheric physics!
 
-Just cloud cover, wind speed, and a simple "Ok" when conditions are good.
+## ✨ What Makes It Special
 
-All information comes from [Open-Meteo.com](https://open-meteo.com/) API.
+- **🌫️ Smart Cloud Tracking**: Monitors low, mid, and high-altitude clouds separately (because that wispy cirrus at 30,000ft matters!)
+- **🌬️ Atmospheric Seeing Calculation**: Advanced turbulence estimation using temperature gradients and wind shear across multiple atmospheric levels
+- **🌙 Lunar Intelligence**: Moon phase, illumination percentage, and rise/set times
+- **☀️ Solar Timing**: Precise sunrise/sunset calculations for golden hour planning
+- **⚡ Lightning Fast**: 10-minute API caching keeps responses snappy
+- **🎯 Location Smart**: Type any city name and get instant geocoding suggestions
+- **📱 No Bloat**: Clean, responsive interface that loads in milliseconds
 
-## Features
-- **Detailed Weather Forecast**: Provides temperature, wind speed, cloud cover, and moon illumination.
-- **Sun & Moon Calculations**: Calculates sunrise, sunset, moonrise, and moonset times.
-- **Minimalist Interface**: Focuses on relevant metrics for astrophotography, avoiding unnecessary weather details.
-- **Caching**: API responses are cached to improve performance and reduce API calls.
-- **Location Suggestions**: Offers geolocation suggestions for easier city selection.
+## 🛠️ Built With
+- **Backend**: Go 1.23.4 (because speed matters when you're chasing clear skies)
+- **Frontend**: Vanilla HTML/JS + UIkit (keeping it simple and fast)
+- **Caching**: bigcache for blazing-fast in-memory storage
+- **APIs**: Open-Meteo for weather data and geocoding
+- **Science**: Meeus astronomical algorithms and atmospheric physics
 
-## Tech Stack
-- **Frontend**: HTML, JavaScript (UIkit framework for styling)
-- **Backend**: Golang (net/http for web server, Open-Meteo API integration)
-- **Caching**: bigcache for in-memory caching
-- **Geolocation**: Open-Meteo Geocoding API
+## 🚀 Quick Start
 
-## Deployment
-This website is deployed to [aweather.info](https://aweather.info)
+### Try It Live
+Just visit **[aweather.info](https://aweather.info)** - no setup required!
 
-### Build image
-Feel free to build your own docker container and deploy using any convinient method.
+### Run Your Own Instance
+```bash
+# Clone and run locally
+git clone https://github.com/shuienko/aweather.info.git
+cd aweather.info/src
+go run .
+# Visit http://localhost:8080
+
+# Or use Docker
+docker build -t aweather .
+docker run -d -p 8080:8080 aweather
 ```
-docker build -t my-app:latest .
-```
-* The `-t` flag allows you to tag the image with a name and version.
 
-### Run image
-Use the docker run command to start a container using the image built in the previous step. The application listens on port 8080, so you should map it to an available port on your host machine.
-```
-docker run -d -p 8080:8080 --name my-weather my-app:latest
-```
-* The `-d` flag runs the container in detached mode (in the background).
-* The `-p 8080:8080` maps the container's `8080` port to your host's `8080` port.
-* The `--name my-running-app` assigns a name to the container for easier management.
+> 💡 **Pro tip**: No API key required! Open-Meteo is generous enough to let us query their free tier.
 
-#### Open `http://localhost:8080` in your browser to access website
+## 🔬 The Science Behind the Magic
 
-#### Please keep in mind _no Open-Meteo API key set by default_.
+### Atmospheric Seeing Calculation
+One of the coolest features is our **atmospheric seeing estimation** - we don't just tell you if it's cloudy, we tell you how **steady** the atmosphere is.
 
-## Seeing evaluation
+Think of it like this: even on a perfectly clear night, atmospheric turbulence can turn stars into dancing blobs in your telescope. Our algorithm crunches real meteorological data to predict seeing conditions:
+
+**What We Calculate:**
+- 🌡️ **Temperature gradients** across different atmospheric layers (surface → 850hPa → 500hPa)
+- 💨 **Wind shear** between ground level and jet stream altitudes  
+- ⚡ **Richardson Number** for atmospheric stability
+- 🌪️ **Jet stream influence** (those 200hPa winds matter!)
+
+**The Formula:**
+> seeing ∝ V^0.6 × T_grad^0.4
+
+Where V is jet stream wind speed and T_grad is temperature gradient.
+
+**Real-World Impact:**
+- 🟢 **Good seeing** (< 2"): Pin-sharp planetary details, tight star images
+- 🟡 **Moderate seeing** (2-4"): Still great for deep sky, softer planetary views  
+- 🔴 **Poor seeing** (> 4"): Stars look like donuts, planets are fuzzy blobs
+
+This isn't just weather data - it's **atmospheric physics** tailored for astrophotographers! 🤓
+
+### Astronomical Calculations
+We use the industry-standard **Meeus algorithms** for precise:
+- 🌅 **Sunrise/sunset** times (down to the second)
+- 🌙 **Moon phases** and illumination percentages
+- 🌔 **Moonrise/moonset** times (including next/previous day calculations)
+
+Perfect for planning those new moon sessions or golden hour timelapses!
+
+## 📊 Detailed Seeing Evaluation
 
 ### Formula for Seeing in Arcseconds
 
 The seeing ( $\epsilon$ ) in arcseconds can be approximated using the following formula, which is based on the Kolmogorov turbulence theory:
 
-
 $\epsilon \approx 0.98 \cdot \lambda^{-1/5} \cdot r_0^{-6/5}$
-
 
 Where:
 * $\lambda$ : Observing wavelength in meters (e.g., 500 nm =  $5 \times 10^{-7}$  m for visible light).
-* $r_0$ : Fried’s parameter (coherence length) in meters, representing the largest aperture over which turbulence is coherent.
+* $r_0$ : Fried's parameter (coherence length) in meters, representing the largest aperture over which turbulence is coherent.
 
-Estimating Fried’s Parameter ( $r_0$ ):
+Estimating Fried's Parameter ( $r_0$ ):
 
-Fried’s parameter depends on atmospheric conditions and can be estimated as:
+Fried's parameter depends on atmospheric conditions and can be estimated as:
 
 $r_0 = \left( \frac{0.423 \cdot (2\pi)^2}{k^2 \cdot \sec(\theta)} \int_0^\infty C_n^2(h) \cdot dh \right)^{-3/5}$
 
-
 Where:
-	•	 $k = 2\pi / \lambda$ : Wavenumber.
-	•	 $C_n^2(h)$ : Refractive index structure constant at height  $h$ , describing turbulence strength.
+* $k = 2\pi / \lambda$ : Wavenumber.
+* $C_n^2(h)$ : Refractive index structure constant at height  $h$ , describing turbulence strength.
 
 If $C_n^2(h)$  is not directly available, meteorological proxies can help approximate seeing conditions.
 
@@ -128,4 +157,4 @@ The `setSeeing` function computes a value representing atmospheric turbulence, w
    - Between 0.25 and 0.5, seeing is increased by 20%.
 
 #### Why This Matters
- Seeing gives the astrophotographers an easy-to-understand measure of atmospheric stability. This allows for better planning of observation sessions by identifying times with favorable conditions for clear imaging.
+Seeing gives the astrophotographers an easy-to-understand measure of atmospheric stability. This allows for better planning of observation sessions by identifying times with favorable conditions for clear imaging.
