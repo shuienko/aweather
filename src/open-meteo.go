@@ -11,15 +11,10 @@ import (
 )
 
 type OpenMeteoAPIResponse struct {
-	Latitude             float64     `json:"latitude"`
-	Longitude            float64     `json:"longitude"`
-	GenerationtimeMS     float64     `json:"generationtime_ms"`
-	UTCOffsetSeconds     int64       `json:"utc_offset_seconds"`
-	Timezone             string      `json:"timezone"`
-	TimezoneAbbreviation string      `json:"timezone_abbreviation"`
-	Elevation            float64     `json:"elevation"`
-	HourlyUnits          HourlyUnits `json:"hourly_units"`
-	Hourly               Hourly      `json:"hourly"`
+	Latitude  float64 `json:"latitude"`
+	Longitude float64 `json:"longitude"`
+	Timezone  string  `json:"timezone"`
+	Hourly    Hourly  `json:"hourly"`
 }
 
 type Hourly struct {
@@ -38,32 +33,11 @@ type Hourly struct {
 	GeopotentialHeight500 []float64 `json:"geopotential_height_500hPa"`
 }
 
-type HourlyUnits struct {
-	Time                  string `json:"time"`
-	Temperature2M         string `json:"temperature_2m"`
-	Temperature500hPa     string `json:"temperature_500hPa"`
-	Temperature850hPa     string `json:"temperature_850hPa"`
-	CloudCoverLow         string `json:"cloud_cover_low"`
-	CloudCoverMid         string `json:"cloud_cover_mid"`
-	CloudCoverHigh        string `json:"cloud_cover_high"`
-	WindSpeed10M          string `json:"wind_speed_10m"`
-	WindGusts10M          string `json:"wind_gusts_10m"`
-	WindSpeed200hPa       string `json:"wind_speed_200hPa"`
-	WindSpeed850hPa       string `json:"wind_speed_850hPa"`
-	GeopotentialHeight850 string `json:"geopotential_height_850hPa"`
-	GeopotentialHeight500 string `json:"geopotential_height_500hPa"`
-}
 
 type Suggestion struct {
-	Name        string  `json:"name"`
-	Country     string  `json:"country"`
-	CountryCode string  `json:"country_code"`
-	Admin1      string  `json:"admin1"`
-	Admin2      string  `json:"admin2"`
-	Admin3      string  `json:"admin3"`
-	Admin4      string  `json:"admin4"`
-	Lat         float64 `json:"latitude"`
-	Lon         float64 `json:"longitude"`
+	Name string  `json:"name"`
+	Lat  float64 `json:"latitude"`
+	Lon  float64 `json:"longitude"`
 }
 
 // FetchData() goes to OpenMeteoEndpoint makes HTTPS request and stores result as OpenMeteoAPIResponse object

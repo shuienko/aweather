@@ -97,7 +97,7 @@ func TestFetchSuggestions_Cache(t *testing.T) {
 
 	// Store a suggestion in cache for testing
 	suggestion := []Suggestion{
-		{Name: "CachedCity", Country: "Testland"},
+		{Name: "CachedCity", Lat: 0.0, Lon: 0.0},
 	}
 	jsonData, _ := json.Marshal(suggestion)
 	cache.Set("CachedCity", jsonData)
