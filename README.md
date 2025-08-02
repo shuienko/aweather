@@ -1,7 +1,7 @@
-# [aweather.info](https://aweather.info)
+# [aweather](https://aweather.shnk.net/)
 
 <p align="center">
-  <img src="https://github.com/shuienko/aweather.info/blob/main/src/static/favicon-192x192.png?raw=true" alt="Logo" width="192"/>
+  <img src="https://github.com/shuienko/aweather/blob/main/src/static/favicon-192x192.png?raw=true" alt="Logo" width="192"/>
 </p>
 
 <p align="center">
@@ -37,7 +37,7 @@ All information comes from [Open-Meteo.com](https://open-meteo.com/) API.
 - **Geolocation**: Open-Meteo Geocoding API
 
 ## Deployment
-This website is deployed to [aweather.info](https://aweather.info)
+This website is deployed to [aweather.shnk.net/](https://aweather.shnk.net/)
 
 ### Build image
 Feel free to build your own docker container and deploy using any convinient method.

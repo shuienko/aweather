@@ -1,4 +1,4 @@
-module aweather.info
+module aweather
 
 go 1.23.4
 
