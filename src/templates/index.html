@@ -11,9 +11,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="/static/favicon-16x16.png">
     <link rel="icon" type="image/png" sizes="192x192" href="/static/favicon-192x192.png">
     <link rel="icon" type="image/png" sizes="512x512" href="/static/favicon-512x512.png">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root{
@@ -25,7 +23,7 @@
             --border: #e5e7eb;
         }
         html, body { background: var(--bg); color: var(--text); }
-        body { font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"; }
+        body, input, button, select, textarea { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
         /* Hide empty forecast box until data arrives */
         #weatherResult:empty { display: none; }
         /* Suggestions dropdown */
@@ -51,6 +49,11 @@
                        class="w-full rounded-xl border border-slate-200 bg-white/90 pl-10 pr-3 py-3 text-[15px] outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100 placeholder:text-slate-400" />
                 <ul id="suggestions" style="display:none;"></ul>
             </div>
+             <button id="geoBtn" onclick="useMyLocation()"
+                     class="shrink-0 rounded-xl border border-slate-200 bg-white px-3 py-3 text-slate-700 font-medium shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200 flex items-center gap-2">
+                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="h-5 w-5 text-slate-600"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V3m0 18v-3m6-6h3M3 12h3m12.364 6.364-2.121-2.121M6.757 6.757 4.636 4.636m12.728 0-2.121 2.121M6.757 17.243l-2.121 2.121M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"/></svg>
+                 Use my location
+             </button>
             <button id="fetchBtn" onclick="fetchWeather()"
                     class="shrink-0 rounded-xl bg-blue-600 px-4 py-3 text-white font-medium shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-200">
                 Get forecast
@@ -225,29 +228,25 @@
             errorEl.style.display = 'none';
             errorEl.textContent = '';
 
-            if (!cityNameInput.value.includes(", ")) {
-                errorEl.textContent = "Please select a valid suggestion from the list.";
+            const cityName = cityNameInput.value;
+            const latitude = latitudeInput.value;
+            const longitude = longitudeInput.value;
+
+            if (!latitude || !longitude || isNaN(latitude) || isNaN(longitude)) {
+                errorEl.textContent = "Please select a valid suggestion from the list or use “Use my location”.";
                 errorEl.style.display = 'block';
                 return;
             }
-            const cityName = cityNameInput.value;
-            if (cityName.length < 2) {
+            if (cityName && cityName.length < 2) {
                 errorEl.textContent = "Please enter a city name with at least 2 characters.";
                 errorEl.style.display = 'block';
                 return;
             }
-            const latitude = latitudeInput.value;
-            const longitude = longitudeInput.value;
-            if (!latitude || !longitude || isNaN(latitude) || isNaN(longitude)) {
-                errorEl.textContent = "Please select a valid suggestion from the list.";
-                errorEl.style.display = 'block';
-                return;
-            }
 
-            const shortName = cityName.split(",")[0].trim();
-            const country = cityName.split(",").slice(-1)[0].trim();
+            const shortName = cityName ? cityName.split(",")[0].trim() : "My location";
+            const country = (cityName && cityName.includes(",")) ? cityName.split(",").slice(-1)[0].trim() : "";
 
-            forecastDetails.textContent = shortName + ", " + country + "  |  " + latitude + ",  " + longitude;
+            forecastDetails.textContent = shortName + (country ? ", " + country : "") + "  |  " + latitude + ",  " + longitude;
             forecastDetails.style.display = "block";
 
             weatherResult.innerHTML = '';
@@ -280,7 +279,8 @@
                 });
 
             const maxAge = "max-age=" + (365 * 24 * 60 * 60);
-            document.cookie = "cityName=" + encodeURIComponent(shortName + ", " + country) + "; path=/; " + maxAge;
+            const cityCookie = country ? (shortName + ", " + country) : shortName;
+            document.cookie = "cityName=" + encodeURIComponent(cityCookie) + "; path=/; " + maxAge;
             document.cookie = "latitude=" + encodeURIComponent(latitude) + "; path=/; " + maxAge;
             document.cookie = "longitude=" + encodeURIComponent(longitude) + "; path=/; " + maxAge;
         }
@@ -359,6 +359,91 @@
             if (cookieMap.longitude) {
                 longitudeInput.value = cookieMap.longitude;
             }
+        }
+
+        // Geolocation: Use my location -> reverse geocode -> fill fields -> fetch
+        function useMyLocation() {
+            const errorEl = document.getElementById('error');
+            const geoBtn = document.getElementById('geoBtn');
+            const cityInput = document.getElementById('city');
+            const latitudeInput = document.getElementById('latitude');
+            const longitudeInput = document.getElementById('longitude');
+            const suggestionsEl = document.getElementById('suggestions');
+
+            suggestionsEl.style.display = 'none';
+            errorEl.style.display = 'none';
+            errorEl.textContent = '';
+
+            if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+                errorEl.textContent = 'Using your location requires HTTPS. Please use the search box instead.';
+                errorEl.style.display = 'block';
+                return;
+            }
+            if (!('geolocation' in navigator)) {
+                errorEl.textContent = 'Geolocation is not supported by your browser. Please use the search box instead.';
+                errorEl.style.display = 'block';
+                return;
+            }
+
+            const originalText = geoBtn.textContent;
+            geoBtn.disabled = true;
+            geoBtn.textContent = 'Locating…';
+
+            navigator.geolocation.getCurrentPosition(
+                async (position) => {
+                    const lat = position.coords.latitude.toFixed(6);
+                    const lon = position.coords.longitude.toFixed(6);
+                    latitudeInput.value = lat;
+                    longitudeInput.value = lon;
+
+                    try {
+                        const resp = await fetch('https://geocoding-api.open-meteo.com/v1/reverse?latitude=' + encodeURIComponent(lat) + '&longitude=' + encodeURIComponent(lon));
+                        if (resp.ok) {
+                            const data = await resp.json();
+                            if (data && data.results && data.results.length > 0) {
+                                const item = data.results[0];
+                                const regions = [item.admin1, item.admin2, item.admin3, item.admin4]
+                                    .filter(region => region && region.trim().length > 0)
+                                    .join(', ');
+                                const country = item.country && item.country.trim().length > 0 ? item.country : item.country_code;
+                                const fullName = item.name + (regions ? ', ' + regions : '') + ', ' + country;
+                                cityInput.value = fullName;
+                            } else {
+                                cityInput.value = 'My location';
+                            }
+                        } else {
+                            cityInput.value = 'My location';
+                        }
+                    } catch (e) {
+                        cityInput.value = 'My location';
+                    } finally {
+                        geoBtn.disabled = false;
+                        geoBtn.textContent = originalText;
+                        fetchWeather();
+                    }
+                },
+                (err) => {
+                    geoBtn.disabled = false;
+                    geoBtn.textContent = originalText;
+                    let msg = '';
+                    switch (err.code) {
+                        case err.PERMISSION_DENIED:
+                            msg = 'Location permission denied. You can use the search box instead.';
+                            break;
+                        case err.POSITION_UNAVAILABLE:
+                            msg = 'Unable to determine your location. Please try the search box.';
+                            break;
+                        case err.TIMEOUT:
+                            msg = 'Timed out while trying to get your location. Please try again.';
+                            break;
+                        default:
+                            msg = "Couldn't get your location. Please use the search box.";
+                    }
+                    errorEl.textContent = msg;
+                    errorEl.style.display = 'block';
+                },
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+            );
         }
     </script>
 </body>
