@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"math"
+	"strings"
 	"time"
 )
 
@@ -132,12 +133,35 @@ func (dp DataPoints) Print() string {
 				moonSetString = moonSetString + "*"
 			}
 
+			// Column widths (align header and rows)
+			wHour, wOK, wTemp, wMoon := 4, 3, 5, 4
+			wLow, wMid, wHigh := 3, 3, 4
+			wWind, wGusts, wSeeing := 5, 5, 6
+
+			// Header
+			header := fmt.Sprintf("%*s | %*s | %*s | %*s | %*s | %*s | %*s | %*s | %*s | %*s\n",
+				wHour, "hour", wOK, "ok?", wTemp, "temp", wMoon, "moon", wLow, "low", wMid, "mid", wHigh, "high", wWind, "wind", wGusts, "gusts", wSeeing, "seeing")
+
+			// Separator matching column widths
+			sep := strings.Join([]string{
+				strings.Repeat("-", wHour),
+				strings.Repeat("-", wOK),
+				strings.Repeat("-", wTemp),
+				strings.Repeat("-", wMoon),
+				strings.Repeat("-", wLow),
+				strings.Repeat("-", wMid),
+				strings.Repeat("-", wHigh),
+				strings.Repeat("-", wWind),
+				strings.Repeat("-", wGusts),
+				strings.Repeat("-", wSeeing),
+			}, "-|-") + "\n"
+
 			// Print out results
 			out += fmt.Sprintf("%s - %s\n", date, dayOfWeek)
 			out += fmt.Sprintf("moon: %s - %s | sun: %s - %s\n", moonRiseString, moonSetString, sunRise.Format("15:04"), sunSet.Format("15:04"))
-			out += "-----------------------------------------------------------------------\n"
-			out += " hour | ok? | temp  | moon  | low | mid  | high | wind  | gusts | seeing \n"
-			out += "-----|-----|-------|-------|-----|------|------|-------|-------|-------\n"
+			out += strings.Repeat("-", len(strings.TrimRight(header, "\n"))) + "\n"
+			out += header
+			out += sep
 			currentDate = date
 		}
 
@@ -146,8 +170,24 @@ func (dp DataPoints) Print() string {
 			status = "ok"
 		}
 
-		out += fmt.Sprintf("%02d | %3s | %5.1f | %3d%%  | %3d | %3d  | %3d  | %5.1f | %5.1f | %4.1f\n",
-			point.Time.Hour(), status, point.Temperature2M, point.MoonIllum, point.LowClouds, point.MidClouds, point.HighClouds, point.WindSpeed, point.WindGusts, point.Seeing)
+		// Column widths must match header
+		wHour, wOK, wTemp, wMoon := 4, 3, 5, 4
+		wLow, wMid, wHigh := 3, 3, 4
+		wWind, wGusts, wSeeing := 5, 5, 6
+
+		hourStr := fmt.Sprintf("%02d", point.Time.Hour())
+		okStr := status
+		tempStr := fmt.Sprintf("%.1f", point.Temperature2M)
+		moonStr := fmt.Sprintf("%d%%", point.MoonIllum)
+		lowStr := fmt.Sprintf("%d", point.LowClouds)
+		midStr := fmt.Sprintf("%d", point.MidClouds)
+		highStr := fmt.Sprintf("%d", point.HighClouds)
+		windStr := fmt.Sprintf("%.1f", point.WindSpeed)
+		gustsStr := fmt.Sprintf("%.1f", point.WindGusts)
+		seeingStr := fmt.Sprintf("%.1f", point.Seeing)
+
+		out += fmt.Sprintf("%*s | %*s | %*s | %*s | %*s | %*s | %*s | %*s | %*s | %*s\n",
+			wHour, hourStr, wOK, okStr, wTemp, tempStr, wMoon, moonStr, wLow, lowStr, wMid, midStr, wHigh, highStr, wWind, windStr, wGusts, gustsStr, wSeeing, seeingStr)
 	}
 
 	return out
