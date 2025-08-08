@@ -189,6 +189,7 @@ func (data OpenMeteoAPIResponse) Points() DataPoints {
 			WindGusts:             data.Hourly.WindGusts10M[i],
 			GeopotentialHeight850: data.Hourly.GeopotentialHeight850[i],
 			GeopotentialHeight500: data.Hourly.GeopotentialHeight500[i],
+			Elevation:             data.Elevation,
 			Lat:                   data.Latitude,
 			Lon:                   data.Longitude,
 		}

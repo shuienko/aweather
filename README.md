@@ -24,7 +24,7 @@ Just cloud cover, wind speed, and a simple "Ok" when conditions are good.
 All information comes from [Open-Meteo.com](https://open-meteo.com/) API.
 
 ## Features
-- **Detailed Weather Forecast**: Provides temperature, cloud cover (low/mid/high), wind speed and gusts, moon illumination, and seeing.
+- **Detailed Weather Forecast**: Provides temperature, cloud cover (low/mid/high), wind speed and gusts, moon illumination, and seeing index.
 - **Sun & Moon Calculations**: Calculates sunrise, sunset, moonrise, and moonset times.
 - **Minimalist Interface**: Focuses on relevant metrics for astrophotography, avoiding unnecessary weather details.
 - **Caching**: API responses are cached to improve performance and reduce API calls.
@@ -89,73 +89,19 @@ docker run -d -p 8080:8080 --name aweather aweather:latest
 - **Cache**: in‑memory cache TTL is 10 minutes.
 - **Port**: the server listens on port `8080`.
 
-## Seeing evaluation
+## Seeing index
 
-### Formula for Seeing in Arcseconds
+The application derives a heuristic “seeing index” from available meteorological fields to help rank time slots for astrophotography. It is not a physically calibrated arcsecond value and should be interpreted as: lower is better.
 
-The seeing ( $\epsilon$ ) in arcseconds can be approximated using the following formula, which is based on the Kolmogorov turbulence theory:
+### Inputs used
+- Temperature: `temperature_2m`, `temperature_500hPa`
+- Wind: `wind_speed_10m`, `wind_speed_850hPa`, `wind_speed_200hPa`
+- Heights: `geopotential_height_500hPa` (and site elevation)
 
+### Method (summary)
+- Compute an elevation‑aware temperature lapse across the total depth from site elevation to 500 hPa: `(T2m − T500) / depth_km`.
+- Form a vertical wind shear proxy: `|V200 − V850| + |V850 − V10|` (all in m/s).
+- Seeing index ∝ `shear^0.6 * |lapse|^0.4`. A small jet‑stream penalty applies above ~22 m/s at 200 hPa, capped to avoid runaway values.
+- The result is clamped to a reasonable range for readability (≈0.5–5.0).
 
-$\epsilon \approx 0.98 \cdot \lambda^{-1/5} \cdot r_0^{-6/5}$
-
-
-Where:
-* $\lambda$ : Observing wavelength in meters (e.g., 500 nm =  $5 \times 10^{-7}$  m for visible light).
-* $r_0$ : Fried’s parameter (coherence length) in meters, representing the largest aperture over which turbulence is coherent.
-
-Estimating Fried’s Parameter ( $r_0$ ):
-
-Fried’s parameter depends on atmospheric conditions and can be estimated as:
-
-$r_0 = \left( \frac{0.423 \cdot (2\pi)^2}{k^2 \cdot \sec(\theta)} \int_0^\infty C_n^2(h) \cdot dh \right)^{-3/5}$
-
-
-Where:
-	•	 $k = 2\pi / \lambda$ : Wavenumber.
-	•	 $C_n^2(h)$ : Refractive index structure constant at height  $h$ , describing turbulence strength.
-
-If $C_n^2(h)$  is not directly available, meteorological proxies can help approximate seeing conditions.
-
-### Practical Approach Using Meteorological Data
-
-#### Overview
-The `setSeeing` function, located in `datapoints.go`, enhances the weather forecasting capability by estimating atmospheric seeing conditions. This is crucial for astrophotographers, as good seeing conditions directly affect the clarity of celestial observations.
-
-#### What the Function Does
-The `setSeeing` function computes a value representing atmospheric turbulence, which can distort the quality of astronomical images. It uses meteorological data to approximate the level of turbulence at different altitudes by evaluating:
-
-- **Temperature Gradients** – Differences in temperature between various atmospheric layers (surface to $850 hPa$ and $850 hPa$ to $500 hPa$).
-- **Wind Shear** – Variations in wind speed between the ground level, $850 hPa$, and $200 hPa$.
-- **Jet Stream Influence** – Penalizes seeing conditions when wind speeds at $200 hPa$ exceed a threshold (15 m/s by default).
-- **Richardson Number ($Ri$)** – A measure of atmospheric stability, further modifying the seeing value when turbulence increases.
-
-#### How it Works
-1. **Temperature Gradients**  
-   The function calculates the temperature difference between:
-   - Surface and $850 hPa$ (low altitude)
-   - $850 hPa$ and $500 hPa$ (mid-altitude)
-
-   These differences are used to derive a temperature gradient across approximately 5 km of the atmosphere.
-
-2. **Wind Shear Calculation**  
-   Wind shear is computed by determining the absolute difference between:
-   - Wind speeds at $200 hPa$ and surface wind speed
-   - Surface wind speed and $850 hPa$ wind speed
-
-3. **Seeing Formula**  
-   The formula to estimate seeing is:   $\epsilon \propto V^{0.6} \cdot T_{\text{grad}}^{0.4}$
-    
-    Where:
-    * $V$ : Wind speed at $200–300 hPa$ (jet stream).
-    * $T_{\text{grad}}$ : Temperature gradient between ground and upper atmosphere.
-4. **Jet Stream Adjustment**  
-   If wind speeds at $200 hPa$ surpass 15 m/s, the seeing value is penalized proportionally, representing increased turbulence due to jet streams.
-
-5. **Richardson Number Adjustment**  
-   The Richardson Number ($Ri$) is calculated by dividing the temperature gradient by the square of the wind speed.  
-   If $Ri$ is:
-   - Less than 0.25, seeing is increased by 50%.
-   - Between 0.25 and 0.5, seeing is increased by 20%.
-
-#### Why This Matters
- Seeing gives the astrophotographers an easy-to-understand measure of atmospheric stability. This allows for better planning of observation sessions by identifying times with favorable conditions for clear imaging.
+This index is intended for relative comparison between hours/nights rather than absolute image resolution.
