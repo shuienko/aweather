@@ -50,6 +50,7 @@ func main() {
 	mux.HandleFunc("/suggestions", handleSuggestions)
 	mux.HandleFunc("/reverse-geocoding", handleReverseGeocoding)
 	mux.HandleFunc("/robots.txt", handleRobots)
+	mux.HandleFunc("/sitemap.xml", handleSitemap)
 	mux.HandleFunc("/favicon.ico", handleFavicon)
 
 	// Root index

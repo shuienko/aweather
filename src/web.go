@@ -186,6 +186,43 @@ func handleFavicon(w http.ResponseWriter, r *http.Request) {
 	serveEmbeddedFile(w, "static/favicon.ico", "image/x-icon")
 }
 
+func handleSitemap(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		w.Header().Set("Allow", http.MethodGet)
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	log.Printf("INFO: From: %s | User-Agent: %s | Path: %s", r.RemoteAddr, r.UserAgent(), r.URL.Path)
+
+	scheme := r.Header.Get("X-Forwarded-Proto")
+	if scheme == "" {
+		// Prefer https unless explicitly forwarded otherwise
+		if r.TLS != nil {
+			scheme = "https"
+		} else {
+			scheme = "https"
+		}
+	}
+	host := r.Host
+	baseURL := fmt.Sprintf("%s://%s", scheme, host)
+
+	sitemap := fmt.Sprintf(`<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>%s/</loc>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>`, baseURL)
+
+	w.Header().Set("Content-Type", "application/xml; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
+	if _, err := w.Write([]byte(sitemap)); err != nil {
+		log.Printf("ERROR: Could not write sitemap.xml: %v", err)
+	}
+}
+
 func float64ToString(f float64) string {
 	return strconv.FormatFloat(f, 'f', 6, 64)
 }
