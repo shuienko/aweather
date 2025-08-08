@@ -26,7 +26,15 @@ var (
 var cache *bigcache.BigCache
 
 func main() {
-	cache, _ = bigcache.New(context.Background(), bigcache.DefaultConfig(CacheTTL))
+	// Initialize cache with bounded size
+	cacheConfig := bigcache.DefaultConfig(CacheTTL)
+	cacheConfig.MaxEntrySize = 4096   // bytes, avoid oversized entries
+	cacheConfig.HardMaxCacheSize = 32 // MB, keeps memory bounded on Cloud Run
+	c, err := bigcache.New(context.Background(), cacheConfig)
+	if err != nil {
+		log.Fatalf("failed to init cache: %v", err)
+	}
+	cache = c
 
 	mux := http.NewServeMux()
 
@@ -47,6 +55,17 @@ func main() {
 	// Root index
 	mux.HandleFunc("/", handleIndex)
 
+	// Harden server with reasonable timeouts
+	srv := &http.Server{
+		Addr:              ":8080",
+		Handler:           mux,
+		ReadTimeout:       10 * time.Second,
+		ReadHeaderTimeout: 10 * time.Second,
+		WriteTimeout:      15 * time.Second,
+		IdleTimeout:       60 * time.Second,
+		MaxHeaderBytes:    1 << 20, // 1MB
+	}
+
 	log.Println("Server started on :8080")
-	log.Fatal(http.ListenAndServe(":8080", mux))
+	log.Fatal(srv.ListenAndServe())
 }

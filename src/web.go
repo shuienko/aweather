@@ -17,6 +17,19 @@ var indexHTML string
 var StaticFiles embed.FS
 
 func handleIndex(w http.ResponseWriter, r *http.Request) {
+	// Only serve the root path
+	if r.URL.Path != "/" {
+		http.NotFound(w, r)
+		return
+	}
+
+	// Only allow GET
+	if r.Method != http.MethodGet {
+		w.Header().Set("Allow", http.MethodGet)
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
 	// Log HTTP request
 	log.Printf("INFO: From: %s | User-Agent: %s | Path: %s", r.RemoteAddr, r.UserAgent(), r.URL.Path)
 
@@ -48,6 +61,12 @@ func handleIndex(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleWeather(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		w.Header().Set("Allow", http.MethodGet)
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
 	lat := r.URL.Query().Get("lat")
 	lon := r.URL.Query().Get("lon")
 
@@ -74,6 +93,12 @@ func handleWeather(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleSuggestions(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		w.Header().Set("Allow", http.MethodGet)
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
 	query := r.URL.Query().Get("q")
 	query = strings.TrimSpace(query)
 
@@ -96,6 +121,12 @@ func handleSuggestions(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleReverseGeocoding(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		w.Header().Set("Allow", http.MethodGet)
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
 	latStr := strings.TrimSpace(r.URL.Query().Get("lat"))
 	lonStr := strings.TrimSpace(r.URL.Query().Get("lon"))
 
@@ -130,11 +161,23 @@ func handleReverseGeocoding(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleRobots(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		w.Header().Set("Allow", http.MethodGet)
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
 	log.Printf("INFO: From: %s | User-Agent: %s | Path: %s", r.RemoteAddr, r.UserAgent(), r.URL.Path)
 	serveEmbeddedFile(w, "static/robots.txt", "text/plain")
 }
 
 func handleFavicon(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		w.Header().Set("Allow", http.MethodGet)
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
 	log.Printf("INFO: From: %s | User-Agent: %s | Path: %s", r.RemoteAddr, r.UserAgent(), r.URL.Path)
 	serveEmbeddedFile(w, "static/favicon.ico", "image/x-icon")
 }
