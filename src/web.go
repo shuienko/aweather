@@ -40,7 +40,7 @@ func handleIndex(w http.ResponseWriter, r *http.Request) {
 		longitude = lonCookie.Value
 	}
 
-	// Insert cookies into JavaScript for the frontend
+	// Insert cookies into template placeholders
 	pageWithCookies := fmt.Sprintf(indexHTML, cityName, latitude, longitude)
 
 	w.Header().Set("Content-Type", "text/html")
@@ -89,7 +89,44 @@ func handleSuggestions(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(suggestions)
+	if err := json.NewEncoder(w).Encode(suggestions); err != nil {
+		http.Error(w, "Unable to encode suggestions", http.StatusInternalServerError)
+		return
+	}
+}
+
+func handleReverseGeocoding(w http.ResponseWriter, r *http.Request) {
+	latStr := strings.TrimSpace(r.URL.Query().Get("lat"))
+	lonStr := strings.TrimSpace(r.URL.Query().Get("lon"))
+
+	if latStr == "" || lonStr == "" {
+		http.Error(w, "Latitude and longitude are required", http.StatusBadRequest)
+		return
+	}
+
+	// Validate numeric input
+	lat, err1 := strconv.ParseFloat(latStr, 64)
+	lon, err2 := strconv.ParseFloat(lonStr, 64)
+	if err1 != nil || err2 != nil {
+		http.Error(w, "Invalid latitude or longitude", http.StatusBadRequest)
+		return
+	}
+
+	log.Printf("INFO: Reverse geocoding for lat: %s, lon: %s", latStr, lonStr)
+	suggestion, _ := fetchReverseGeocoding(float64ToString(lat), float64ToString(lon))
+
+	w.Header().Set("Content-Type", "application/json")
+	// Always return 200 with either a suggestion or an empty object to keep UX smooth
+	if suggestion == nil {
+		if _, err := w.Write([]byte(`{}`)); err != nil {
+			log.Printf("ERROR: reverse-geocoding write: %v", err)
+		}
+		return
+	}
+	if err := json.NewEncoder(w).Encode(suggestion); err != nil {
+		http.Error(w, "Unable to encode result", http.StatusInternalServerError)
+		return
+	}
 }
 
 func handleRobots(w http.ResponseWriter, r *http.Request) {

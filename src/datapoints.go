@@ -30,18 +30,32 @@ type DataPoint struct {
 
 type DataPoints []DataPoint
 
+// Shared column widths for printing header and rows
+const (
+	colWidthHour   = 4
+	colWidthOK     = 3
+	colWidthTemp   = 5
+	colWidthMoon   = 4
+	colWidthLow    = 3
+	colWidthMid    = 3
+	colWidthHigh   = 4
+	colWidthWind   = 5
+	colWidthGusts  = 5
+	colWidthSeeing = 6
+)
+
 // isGood() returns true if Low, Mid and High clouds percentage is less than maxCloudCover and wind is less than maxWind
 func (d DataPoint) isGood(maxCloudCover int64, maxWind float64) bool {
-	if d.HighClouds <= maxCloudCover && d.MidClouds <= maxCloudCover && d.LowClouds <= maxCloudCover && d.WindSpeed <= maxWind && d.WindGusts <= maxWind {
-		return true
-	} else {
-		return false
-	}
+	return d.HighClouds <= maxCloudCover &&
+		d.MidClouds <= maxCloudCover &&
+		d.LowClouds <= maxCloudCover &&
+		d.WindSpeed <= maxWind &&
+		d.WindGusts <= maxWind
 }
 
 // setMoonIllumination() sets MoonIllum value for point in DataPoints
 func (dp DataPoints) setMoonIllumination() DataPoints {
-	updatedPoints := DataPoints{}
+	updatedPoints := make(DataPoints, 0, len(dp))
 
 	for _, point := range dp {
 		point.MoonIllum = int64(math.Round(moonIllumination(point.Time)))
@@ -53,7 +67,7 @@ func (dp DataPoints) setMoonIllumination() DataPoints {
 
 // setSeeing() sets Seeing value for point in DataPoints
 func (dp DataPoints) setSeeing() DataPoints {
-	updatedPoints := DataPoints{}
+	updatedPoints := make(DataPoints, 0, len(dp))
 
 	for _, point := range dp {
 		// Jet stream penalty configuration (using 200 hPa winds)
@@ -135,36 +149,31 @@ func (dp DataPoints) Print() string {
 				moonSetString = moonSetString + "*"
 			}
 
-			// Column widths (align header and rows)
-			const (
-				wHour   = 4
-				wOK     = 3
-				wTemp   = 5
-				wMoon   = 4
-				wLow    = 3
-				wMid    = 3
-				wHigh   = 4
-				wWind   = 5
-				wGusts  = 5
-				wSeeing = 6
-			)
-
 			// Header
 			header := fmt.Sprintf("%*s | %*s | %*s | %*s | %*s | %*s | %*s | %*s | %*s | %*s\n",
-				wHour, "hour", wOK, "ok?", wTemp, "temp", wMoon, "moon", wLow, "low", wMid, "mid", wHigh, "high", wWind, "wind", wGusts, "gusts", wSeeing, "seeing")
+				colWidthHour, "hour",
+				colWidthOK, "ok?",
+				colWidthTemp, "temp",
+				colWidthMoon, "moon",
+				colWidthLow, "low",
+				colWidthMid, "mid",
+				colWidthHigh, "high",
+				colWidthWind, "wind",
+				colWidthGusts, "gusts",
+				colWidthSeeing, "seeing")
 
 			// Separator matching column widths
 			sep := strings.Join([]string{
-				strings.Repeat("-", wHour),
-				strings.Repeat("-", wOK),
-				strings.Repeat("-", wTemp),
-				strings.Repeat("-", wMoon),
-				strings.Repeat("-", wLow),
-				strings.Repeat("-", wMid),
-				strings.Repeat("-", wHigh),
-				strings.Repeat("-", wWind),
-				strings.Repeat("-", wGusts),
-				strings.Repeat("-", wSeeing),
+				strings.Repeat("-", colWidthHour),
+				strings.Repeat("-", colWidthOK),
+				strings.Repeat("-", colWidthTemp),
+				strings.Repeat("-", colWidthMoon),
+				strings.Repeat("-", colWidthLow),
+				strings.Repeat("-", colWidthMid),
+				strings.Repeat("-", colWidthHigh),
+				strings.Repeat("-", colWidthWind),
+				strings.Repeat("-", colWidthGusts),
+				strings.Repeat("-", colWidthSeeing),
 			}, "-|-") + "\n"
 
 			// Print out results
@@ -181,20 +190,6 @@ func (dp DataPoints) Print() string {
 			status = "ok"
 		}
 
-		// Column widths must match header
-		const (
-			wHour   = 4
-			wOK     = 3
-			wTemp   = 5
-			wMoon   = 4
-			wLow    = 3
-			wMid    = 3
-			wHigh   = 4
-			wWind   = 5
-			wGusts  = 5
-			wSeeing = 6
-		)
-
 		hourStr := fmt.Sprintf("%02d", point.Time.Hour())
 		okStr := status
 		tempStr := fmt.Sprintf("%.1f", point.Temperature2M)
@@ -207,7 +202,16 @@ func (dp DataPoints) Print() string {
 		seeingStr := fmt.Sprintf("%.1f", point.Seeing)
 
 		out += fmt.Sprintf("%*s | %*s | %*s | %*s | %*s | %*s | %*s | %*s | %*s | %*s\n",
-			wHour, hourStr, wOK, okStr, wTemp, tempStr, wMoon, moonStr, wLow, lowStr, wMid, midStr, wHigh, highStr, wWind, windStr, wGusts, gustsStr, wSeeing, seeingStr)
+			colWidthHour, hourStr,
+			colWidthOK, okStr,
+			colWidthTemp, tempStr,
+			colWidthMoon, moonStr,
+			colWidthLow, lowStr,
+			colWidthMid, midStr,
+			colWidthHigh, highStr,
+			colWidthWind, windStr,
+			colWidthGusts, gustsStr,
+			colWidthSeeing, seeingStr)
 	}
 
 	return out

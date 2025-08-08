@@ -66,14 +66,16 @@ type Suggestion struct {
 	Lon         float64 `json:"longitude"`
 }
 
+// shared HTTP client with reasonable timeout
+var httpClient = &http.Client{Timeout: 12 * time.Second}
+
 // FetchData() goes to OpenMeteoEndpoint makes HTTPS request and stores result as OpenMeteoAPIResponse object
 func (response *OpenMeteoAPIResponse) FetchData(apiEndpoint, parameters, lat, lon string) {
-	latlon := lat + lon
-	weatherData, err := cache.Get(latlon)
+	cacheKey := fmt.Sprintf("weather:%s,%s:%s", lat, lon, parameters)
+	weatherData, err := cache.Get(cacheKey)
 
 	if err != nil {
 		log.Println("INFO: Making request to Open-Meteo API and parsing response")
-		client := &http.Client{}
 
 		// Set parameters
 		params := url.Values{}
@@ -89,7 +91,7 @@ func (response *OpenMeteoAPIResponse) FetchData(apiEndpoint, parameters, lat, lo
 			return
 		}
 
-		resp, err := client.Do(req)
+		resp, err := httpClient.Do(req)
 		if err != nil {
 			log.Println("ERROR:", err)
 			return
@@ -97,8 +99,8 @@ func (response *OpenMeteoAPIResponse) FetchData(apiEndpoint, parameters, lat, lo
 		defer resp.Body.Close()
 
 		// Read Response Body
-		if resp.StatusCode != 200 {
-			fmt.Println("ERROR: Open-Meteo API response code:", resp.Status)
+		if resp.StatusCode != http.StatusOK {
+			log.Printf("ERROR: Open-Meteo API response code: %s", resp.Status)
 			return
 		}
 
@@ -106,9 +108,9 @@ func (response *OpenMeteoAPIResponse) FetchData(apiEndpoint, parameters, lat, lo
 		weatherData, _ = io.ReadAll(resp.Body)
 
 		// Save response to cache
-		cache.Set(latlon, weatherData)
+		cache.Set(cacheKey, weatherData)
 	} else {
-		log.Println("INFO: Using cached data for latlon", latlon)
+		log.Println("INFO: Using cached data for", cacheKey)
 	}
 
 	// Save response as OpenMeteoAPIResponse object
@@ -125,13 +127,21 @@ func fetchSuggestions(query string) ([]Suggestion, error) {
 	encodedQuery := url.QueryEscape(query)
 
 	// Check if query is in cache
-	resultByte, err := cache.Get(encodedQuery)
+	cacheKey := "geo:" + encodedQuery
+	resultByte, err := cache.Get(cacheKey)
+	if err != nil {
+		// Fallback to legacy key used previously
+		if legacy, legacyErr := cache.Get(encodedQuery); legacyErr == nil {
+			resultByte = legacy
+			err = nil
+		}
+	}
 
 	// If not in cache, make request to OpenMeteoGeoAPI
 	if err != nil {
 		log.Println("INFO: Making request to Open-Meteo Geo API and parsing response for query: ", encodedQuery)
 		requestURL := fmt.Sprintf("%s?name=%s", OpenMeteoGeoAPIEndpoint, encodedQuery)
-		resp, err := http.Get(requestURL)
+		resp, err := httpClient.Get(requestURL)
 		if err != nil {
 			return nil, err
 		}
@@ -146,6 +156,8 @@ func fetchSuggestions(query string) ([]Suggestion, error) {
 
 		// Save response to cache
 		jsonData, _ := json.Marshal(result.Results)
+		cache.Set(cacheKey, jsonData)
+		// Also store under legacy key for backward compatibility (tests rely on it)
 		cache.Set(encodedQuery, jsonData)
 
 		// Return results
@@ -160,6 +172,50 @@ func fetchSuggestions(query string) ([]Suggestion, error) {
 		// Return results
 		return result, nil
 	}
+}
+
+// fetchReverseGeocoding queries Open‑Meteo Reverse Geocoding API for a single best match
+// It caches the first result under key "reverse:lat,lon" and returns it.
+func fetchReverseGeocoding(lat string, lon string) (*Suggestion, error) {
+	cacheKey := fmt.Sprintf("reverse:%s,%s", lat, lon)
+
+	if cached, err := cache.Get(cacheKey); err == nil {
+		var suggestion Suggestion
+		if err := json.Unmarshal(cached, &suggestion); err == nil {
+			return &suggestion, nil
+		}
+		// fallthrough to refetch on unmarshal error
+	}
+
+	log.Println("INFO: Making request to Open-Meteo Reverse Geo API for:", lat, lon)
+	requestURL := fmt.Sprintf("%s?latitude=%s&longitude=%s", OpenMeteoGeoReverseAPIEndpoint, url.QueryEscape(lat), url.QueryEscape(lon))
+	resp, err := httpClient.Get(requestURL)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		// Upstream returned non-200; treat as no result to avoid surfacing errors to clients
+		return nil, nil
+	}
+
+	var result struct {
+		Results []Suggestion `json:"results"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, err
+	}
+
+	if len(result.Results) == 0 {
+		return nil, nil
+	}
+
+	top := result.Results[0]
+	if data, err := json.Marshal(top); err == nil {
+		cache.Set(cacheKey, data)
+	}
+	return &top, nil
 }
 
 // Points() return DataPoints object based on OpenMeteoAPIResponse fields
