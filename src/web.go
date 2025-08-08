@@ -186,6 +186,40 @@ func handleFavicon(w http.ResponseWriter, r *http.Request) {
 	serveEmbeddedFile(w, "static/favicon.ico", "image/x-icon")
 }
 
+// handleSitemap serves a minimal XML sitemap for SEO crawlers
+func handleSitemap(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		w.Header().Set("Allow", http.MethodGet)
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	scheme := requestScheme(r)
+	baseURL := fmt.Sprintf("%s://%s", scheme, r.Host)
+
+	sitemap := "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
+		"<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">" +
+		fmt.Sprintf("<url><loc>%s/</loc><changefreq>daily</changefreq><priority>1.0</priority></url>", baseURL) +
+		"</urlset>"
+
+	w.Header().Set("Content-Type", "application/xml")
+	w.WriteHeader(http.StatusOK)
+	if _, err := w.Write([]byte(sitemap)); err != nil {
+		log.Printf("ERROR: sitemap write: %v", err)
+	}
+}
+
+// requestScheme infers request scheme from headers or TLS
+func requestScheme(r *http.Request) string {
+	if xf := strings.TrimSpace(r.Header.Get("X-Forwarded-Proto")); xf != "" {
+		return xf
+	}
+	if r.TLS != nil {
+		return "https"
+	}
+	return "http"
+}
+
 func float64ToString(f float64) string {
 	return strconv.FormatFloat(f, 'f', 6, 64)
 }

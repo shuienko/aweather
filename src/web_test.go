@@ -81,3 +81,23 @@ func TestHandleFavicon(t *testing.T) {
 		t.Errorf("Expected status %d, got %d", http.StatusOK, res.StatusCode)
 	}
 }
+
+func TestHandleSitemap(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "/sitemap.xml", nil)
+	req.Header.Set("X-Forwarded-Proto", "https")
+	req.Host = "example.com"
+
+	rec := httptest.NewRecorder()
+	handleSitemap(rec, req)
+
+	res := rec.Result()
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		t.Errorf("Expected status %d, got %d", http.StatusOK, res.StatusCode)
+	}
+
+	if contentType := res.Header.Get("Content-Type"); contentType != "application/xml" {
+		t.Errorf("Expected Content-Type application/xml, got %s", contentType)
+	}
+}
