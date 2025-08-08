@@ -7,6 +7,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const latitudeInput = document.getElementById("latitude");
   const longitudeInput = document.getElementById("longitude");
   const suggestionsEl = document.getElementById("suggestions");
+  const unitTempC = document.getElementById("unitTempC");
+  const unitTempF = document.getElementById("unitTempF");
+  const unitWindKmh = document.getElementById("unitWindKmh");
+  const unitWindMph = document.getElementById("unitWindMph");
+  const time24h = document.getElementById("time24h");
+  const time12h = document.getElementById("time12h");
 
   // Clear coordinates if user backspaces the query
   cityInput.addEventListener("input", (event) => {
@@ -35,6 +41,75 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   loadCookies();
+
+  // Wire unit/time toggle listeners (if elements exist)
+  const maybeRefetch = () => {
+    const lat = latitudeInput.value;
+    const lon = longitudeInput.value;
+    if (lat && lon && !isNaN(lat) && !isNaN(lon)) {
+      fetchWeather();
+    }
+  };
+
+  function setCookie(name, value) {
+    const maxAge = "max-age=" + 365 * 24 * 60 * 60;
+    document.cookie = `${name}=${encodeURIComponent(value)}; path=/; ${maxAge}`;
+  }
+
+  if (unitTempC && unitTempF) {
+    unitTempC.addEventListener("click", () => {
+      setCookie("unitTemp", "c");
+      unitTempC.classList.add("bg-blue-600", "text-white");
+      unitTempC.classList.remove("bg-white", "text-blue-600");
+      unitTempF.classList.remove("bg-blue-600", "text-white");
+      unitTempF.classList.add("bg-white", "text-blue-600");
+      maybeRefetch();
+    });
+    unitTempF.addEventListener("click", () => {
+      setCookie("unitTemp", "f");
+      unitTempF.classList.add("bg-blue-600", "text-white");
+      unitTempF.classList.remove("bg-white", "text-blue-600");
+      unitTempC.classList.remove("bg-blue-600", "text-white");
+      unitTempC.classList.add("bg-white", "text-blue-600");
+      maybeRefetch();
+    });
+  }
+  if (unitWindKmh && unitWindMph) {
+    unitWindKmh.addEventListener("click", () => {
+      setCookie("unitWind", "kmh");
+      unitWindKmh.classList.add("bg-blue-600", "text-white");
+      unitWindKmh.classList.remove("bg-white", "text-blue-600");
+      unitWindMph.classList.remove("bg-blue-600", "text-white");
+      unitWindMph.classList.add("bg-white", "text-blue-600");
+      maybeRefetch();
+    });
+    unitWindMph.addEventListener("click", () => {
+      setCookie("unitWind", "mph");
+      unitWindMph.classList.add("bg-blue-600", "text-white");
+      unitWindMph.classList.remove("bg-white", "text-blue-600");
+      unitWindKmh.classList.remove("bg-blue-600", "text-white");
+      unitWindKmh.classList.add("bg-white", "text-blue-600");
+      maybeRefetch();
+    });
+  }
+  if (time24h && time12h) {
+    time24h.addEventListener("click", () => {
+      setCookie("time12h", "0");
+      time24h.classList.add("bg-blue-600", "text-white");
+      time24h.classList.remove("bg-white", "text-blue-600");
+      time12h.classList.remove("bg-blue-600", "text-white");
+      time12h.classList.add("bg-white", "text-blue-600");
+      maybeRefetch();
+    });
+    time12h.addEventListener("click", () => {
+      setCookie("time12h", "1");
+      time12h.classList.add("bg-blue-600", "text-white");
+      time12h.classList.remove("bg-white", "text-blue-600");
+      time24h.classList.remove("bg-blue-600", "text-white");
+      time24h.classList.add("bg-white", "text-blue-600");
+      maybeRefetch();
+    });
+  }
 });
 
 // ---- Helpers ----
@@ -71,6 +146,33 @@ function clearError() {
   const el = document.getElementById("error");
   el.textContent = "";
   el.style.display = "none";
+}
+
+// Safely escape HTML for rendering inside elements where we want to inject markup selectively
+function escapeHtml(str) {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+// Detect if a given table line has "ok" in the ok? column
+function isOkRow(line) {
+  if (!line || line.indexOf("|") === -1) return false;
+  const cols = line.split("|").map((s) => s.trim());
+  // The ok? column is the second column in our table
+  // Header is "ok?"; separator rows are dashes; data rows contain "ok" or "-"
+  return cols.length >= 2 && cols[1] === "ok";
+}
+
+// Convert plain-text table into HTML, bolding rows that are "ok"
+function tableTextToHtml(tableText) {
+  const lines = tableText.split("\n");
+  const htmlLines = lines.map((line) => {
+    const escaped = escapeHtml(line);
+    return isOkRow(line) ? `<span class="ok-row">${escaped}</span>` : escaped;
+  });
+  return htmlLines.join("\n");
 }
 
 function showSuggestions() {
@@ -165,7 +267,11 @@ async function fetchWeather() {
   cityNameInput.disabled = true;
 
   try {
-    const resp = await fetch(`/weather?lat=${encodeURIComponent(latitude)}&lon=${encodeURIComponent(longitude)}`);
+    const cookies = parseCookies();
+    const unitTemp = (cookies.unitTemp || "c").toLowerCase();
+    const unitWind = (cookies.unitWind || "kmh").toLowerCase();
+    const time12h = cookies.time12h === "1" ? "1" : "0";
+    const resp = await fetch(`/weather?lat=${encodeURIComponent(latitude)}&lon=${encodeURIComponent(longitude)}&unit_temp=${encodeURIComponent(unitTemp)}&unit_wind=${encodeURIComponent(unitWind)}&time_12h=${encodeURIComponent(time12h)}`);
     if (!resp.ok) throw new Error("Error fetching weather data: " + resp.statusText);
     const text = await resp.text();
     renderWeather(text);
@@ -226,7 +332,7 @@ function renderWeather(text) {
 
     const pre = document.createElement("pre");
     pre.className = "inline-block text-left font-mono whitespace-pre leading-relaxed max-w-full";
-    pre.textContent = tableTextWithBlankLine;
+    pre.innerHTML = tableTextToHtml(tableTextWithBlankLine);
 
     preWrap.appendChild(pre);
     card.appendChild(header);
@@ -243,6 +349,57 @@ function loadCookies() {
   if (cookies.cityName) cityNameInput.value = cookies.cityName;
   if (cookies.latitude) latitudeInput.value = cookies.latitude;
   if (cookies.longitude) longitudeInput.value = cookies.longitude;
+
+  // Apply unit/time preferences to toggles
+  const unitTemp = (cookies.unitTemp || "c").toLowerCase();
+  const unitWind = (cookies.unitWind || "kmh").toLowerCase();
+  const time12h = cookies.time12h === "1";
+  const unitTempC = document.getElementById("unitTempC");
+  const unitTempF = document.getElementById("unitTempF");
+  const unitWindKmh = document.getElementById("unitWindKmh");
+  const unitWindMph = document.getElementById("unitWindMph");
+  const time24h = document.getElementById("time24h");
+  const time12hBtn = document.getElementById("time12h");
+
+  if (unitTempC && unitTempF) {
+    if (unitTemp === "f") {
+      unitTempF.classList.add("bg-blue-600", "text-white");
+      unitTempF.classList.remove("bg-white", "text-blue-600");
+      unitTempC.classList.remove("bg-blue-600", "text-white");
+      unitTempC.classList.add("bg-white", "text-blue-600");
+    } else {
+      unitTempC.classList.add("bg-blue-600", "text-white");
+      unitTempC.classList.remove("bg-white", "text-blue-600");
+      unitTempF.classList.remove("bg-blue-600", "text-white");
+      unitTempF.classList.add("bg-white", "text-blue-600");
+    }
+  }
+  if (unitWindKmh && unitWindMph) {
+    if (unitWind === "mph") {
+      unitWindMph.classList.add("bg-blue-600", "text-white");
+      unitWindMph.classList.remove("bg-white", "text-blue-600");
+      unitWindKmh.classList.remove("bg-blue-600", "text-white");
+      unitWindKmh.classList.add("bg-white", "text-blue-600");
+    } else {
+      unitWindKmh.classList.add("bg-blue-600", "text-white");
+      unitWindKmh.classList.remove("bg-white", "text-blue-600");
+      unitWindMph.classList.remove("bg-blue-600", "text-white");
+      unitWindMph.classList.add("bg-white", "text-blue-600");
+    }
+  }
+  if (time24h && time12hBtn) {
+    if (time12h) {
+      time12hBtn.classList.add("bg-blue-600", "text-white");
+      time12hBtn.classList.remove("bg-white", "text-blue-600");
+      time24h.classList.remove("bg-blue-600", "text-white");
+      time24h.classList.add("bg-white", "text-blue-600");
+    } else {
+      time24h.classList.add("bg-blue-600", "text-white");
+      time24h.classList.remove("bg-white", "text-blue-600");
+      time12hBtn.classList.remove("bg-blue-600", "text-white");
+      time12hBtn.classList.add("bg-white", "text-blue-600");
+    }
+  }
 }
 
 async function useMyLocation() {

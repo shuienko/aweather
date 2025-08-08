@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"strconv"
 	"time"
 )
 
@@ -177,18 +178,33 @@ func fetchSuggestions(query string) ([]Suggestion, error) {
 // fetchReverseGeocoding queries Open‑Meteo Reverse Geocoding API for a single best match
 // It caches the first result under key "reverse:lat,lon" and returns it.
 func fetchReverseGeocoding(lat string, lon string) (*Suggestion, error) {
-	cacheKey := fmt.Sprintf("reverse:%s,%s", lat, lon)
+	// Normalize to 3 decimal places (~111m) to avoid cache misses due to small GPS jitter
+	// This significantly increases cache hit rate and reduces upstream calls.
+	normLat, normLon := lat, lon
+	if lf, err1 := strconv.ParseFloat(lat, 64); err1 == nil {
+		normLat = strconv.FormatFloat(lf, 'f', 3, 64)
+	}
+	if lf, err2 := strconv.ParseFloat(lon, 64); err2 == nil {
+		normLon = strconv.FormatFloat(lf, 'f', 3, 64)
+	}
+
+	cacheKey := fmt.Sprintf("reverse:%s,%s", normLat, normLon)
 
 	if cached, err := cache.Get(cacheKey); err == nil {
 		var suggestion Suggestion
 		if err := json.Unmarshal(cached, &suggestion); err == nil {
+			log.Println("INFO: Using cached reverse geocoding for", cacheKey)
 			return &suggestion, nil
+		} else {
+			log.Println("WARN: Cached reverse geocoding unmarshal failed, refetching:", cacheKey, err)
 		}
 		// fallthrough to refetch on unmarshal error
+	} else {
+		log.Println("INFO: Reverse geocoding cache miss for", cacheKey, "reason:", err)
 	}
 
-	log.Println("INFO: Making request to Open-Meteo Reverse Geo API for:", lat, lon)
-	requestURL := fmt.Sprintf("%s?latitude=%s&longitude=%s", OpenMeteoGeoReverseAPIEndpoint, url.QueryEscape(lat), url.QueryEscape(lon))
+	log.Println("INFO: Making request to Open-Meteo Reverse Geo API for:", normLat, normLon)
+	requestURL := fmt.Sprintf("%s?latitude=%s&longitude=%s", OpenMeteoGeoReverseAPIEndpoint, url.QueryEscape(normLat), url.QueryEscape(normLon))
 	resp, err := httpClient.Get(requestURL)
 	if err != nil {
 		return nil, err
@@ -213,7 +229,13 @@ func fetchReverseGeocoding(lat string, lon string) (*Suggestion, error) {
 
 	top := result.Results[0]
 	if data, err := json.Marshal(top); err == nil {
-		cache.Set(cacheKey, data)
+		if err := cache.Set(cacheKey, data); err != nil {
+			log.Println("WARN: Failed to cache reverse geocoding result for", cacheKey, "error:", err)
+		} else {
+			log.Println("INFO: Cached reverse geocoding for", cacheKey)
+		}
+	} else {
+		log.Println("WARN: Failed to marshal reverse geocoding result for", cacheKey, "error:", err)
 	}
 	return &top, nil
 }

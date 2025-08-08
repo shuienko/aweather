@@ -30,6 +30,13 @@ type DataPoint struct {
 
 type DataPoints []DataPoint
 
+// PrintOptions controls display units and time formatting
+type PrintOptions struct {
+	TemperatureUnit string // "c" or "f"
+	WindSpeedUnit   string // "kmh" or "mph"
+	Use12Hour       bool
+}
+
 // Shared column widths for printing header and rows
 const (
 	colWidthHour   = 4
@@ -199,6 +206,150 @@ func (dp DataPoints) Print() string {
 		highStr := fmt.Sprintf("%d", point.HighClouds)
 		windStr := fmt.Sprintf("%.1f", point.WindSpeed)
 		gustsStr := fmt.Sprintf("%.1f", point.WindGusts)
+		seeingStr := fmt.Sprintf("%.1f", point.Seeing)
+
+		out += fmt.Sprintf("%*s | %*s | %*s | %*s | %*s | %*s | %*s | %*s | %*s | %*s\n",
+			colWidthHour, hourStr,
+			colWidthOK, okStr,
+			colWidthTemp, tempStr,
+			colWidthMoon, moonStr,
+			colWidthLow, lowStr,
+			colWidthMid, midStr,
+			colWidthHigh, highStr,
+			colWidthWind, windStr,
+			colWidthGusts, gustsStr,
+			colWidthSeeing, seeingStr)
+	}
+
+	return out
+}
+
+// PrintWithOptions returns Markdown-like string using provided formatting options
+func (dp DataPoints) PrintWithOptions(opts PrintOptions) string {
+	// normalize options
+	tempUnit := strings.ToLower(strings.TrimSpace(opts.TemperatureUnit))
+	if tempUnit != "f" {
+		tempUnit = "c"
+	}
+	windUnit := strings.ToLower(strings.TrimSpace(opts.WindSpeedUnit))
+	if windUnit != "mph" {
+		windUnit = "kmh"
+	}
+
+	out := ""
+	currentDate := ""
+
+	for _, point := range dp {
+		date := point.Time.Format("January 2")
+		dayOfWeek := point.Time.Format("Monday")
+
+		if date != currentDate {
+			if currentDate != "" {
+				out += "\n"
+			}
+			// Get Moon and Sun rise and set time
+			moonRise, moonSet := calculateRiseSet(point.Time, point.Lat, point.Lon, "moon")
+			sunRise, sunSet := calculateRiseSet(point.Time, point.Lat, point.Lon, "sun")
+
+			// Format time strings depending on 12/24h preference
+			timeFmt := "15:04"
+			if opts.Use12Hour {
+				timeFmt = "3:04pm"
+			}
+
+			// Format for Moon
+			moonRiseString := moonRise.Format(timeFmt)
+			moonSetString := moonSet.Format(timeFmt)
+
+			// Handle special cases when Moon is not rising or setting on that day
+			if moonRise.Day() != point.Time.Day() {
+				moonRiseString = moonRiseString + "*"
+			}
+
+			if moonSet.Day() != point.Time.Day() {
+				moonSetString = moonSetString + "*"
+			}
+
+			// Header
+			header := fmt.Sprintf("%*s | %*s | %*s | %*s | %*s | %*s | %*s | %*s | %*s | %*s\n",
+				colWidthHour, "hour",
+				colWidthOK, "ok?",
+				colWidthTemp, "temp",
+				colWidthMoon, "moon",
+				colWidthLow, "low",
+				colWidthMid, "mid",
+				colWidthHigh, "high",
+				colWidthWind, "wind",
+				colWidthGusts, "gusts",
+				colWidthSeeing, "seeing")
+
+			// Separator matching column widths
+			sep := strings.Join([]string{
+				strings.Repeat("-", colWidthHour),
+				strings.Repeat("-", colWidthOK),
+				strings.Repeat("-", colWidthTemp),
+				strings.Repeat("-", colWidthMoon),
+				strings.Repeat("-", colWidthLow),
+				strings.Repeat("-", colWidthMid),
+				strings.Repeat("-", colWidthHigh),
+				strings.Repeat("-", colWidthWind),
+				strings.Repeat("-", colWidthGusts),
+				strings.Repeat("-", colWidthSeeing),
+			}, "-|-") + "\n"
+
+			// Print out results
+			out += fmt.Sprintf("%s - %s\n", date, dayOfWeek)
+			out += fmt.Sprintf("moon: %s - %s | sun: %s - %s\n", moonRiseString, moonSetString, sunRise.Format(timeFmt), sunSet.Format(timeFmt))
+			out += strings.Repeat("-", len(strings.TrimRight(header, "\n"))) + "\n"
+			out += header
+			out += sep
+			currentDate = date
+		}
+
+		status := "-"
+		if point.isGood(MaxCloudCover, MaxWindSpeed) {
+			status = "ok"
+		}
+
+		// hour string
+		hourStr := ""
+		if opts.Use12Hour {
+			hour := point.Time.Hour()
+			ampm := "am"
+			if hour >= 12 {
+				ampm = "pm"
+			}
+			h12 := hour % 12
+			if h12 == 0 {
+				h12 = 12
+			}
+			hourStr = fmt.Sprintf("%d%s", h12, ampm)
+		} else {
+			hourStr = fmt.Sprintf("%02d", point.Time.Hour())
+		}
+
+		// temperature conversion (display only)
+		temp := point.Temperature2M
+		if tempUnit == "f" {
+			temp = temp*9.0/5.0 + 32.0
+		}
+
+		// wind conversion (display only)
+		wind := point.WindSpeed
+		gusts := point.WindGusts
+		if windUnit == "mph" {
+			wind = wind / 1.609344
+			gusts = gusts / 1.609344
+		}
+
+		okStr := status
+		tempStr := fmt.Sprintf("%.1f", temp)
+		moonStr := fmt.Sprintf("%d%%", point.MoonIllum)
+		lowStr := fmt.Sprintf("%d", point.LowClouds)
+		midStr := fmt.Sprintf("%d", point.MidClouds)
+		highStr := fmt.Sprintf("%d", point.HighClouds)
+		windStr := fmt.Sprintf("%.1f", wind)
+		gustsStr := fmt.Sprintf("%.1f", gusts)
 		seeingStr := fmt.Sprintf("%.1f", point.Seeing)
 
 		out += fmt.Sprintf("%*s | %*s | %*s | %*s | %*s | %*s | %*s | %*s | %*s | %*s\n",

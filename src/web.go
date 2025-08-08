@@ -69,6 +69,9 @@ func handleWeather(w http.ResponseWriter, r *http.Request) {
 
 	lat := r.URL.Query().Get("lat")
 	lon := r.URL.Query().Get("lon")
+	unitTemp := strings.ToLower(strings.TrimSpace(r.URL.Query().Get("unit_temp")))
+	unitWind := strings.ToLower(strings.TrimSpace(r.URL.Query().Get("unit_wind")))
+	time12h := strings.TrimSpace(r.URL.Query().Get("time_12h")) == "1"
 
 	if lat == "" || lon == "" {
 		http.Error(w, "Latitude and longitude are required", http.StatusBadRequest)
@@ -86,7 +89,8 @@ func handleWeather(w http.ResponseWriter, r *http.Request) {
 
 	data := OpenMeteoAPIResponse{}
 	data.FetchData(OpenMeteoAPIEndpoint, OpenMeteoAPIParams, float64ToString(latitude), float64ToString(longitude))
-	weatherTable := data.Points().setMoonIllumination().setSeeing().Print()
+	opts := PrintOptions{TemperatureUnit: unitTemp, WindSpeedUnit: unitWind, Use12Hour: time12h}
+	weatherTable := data.Points().setMoonIllumination().setSeeing().PrintWithOptions(opts)
 
 	w.Header().Set("Content-Type", "text/plain")
 	fmt.Fprint(w, weatherTable)
