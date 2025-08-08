@@ -1,5 +1,4 @@
 User-agent: *
-Allow: /static/favicon.ico
 Disallow: /suggestions
+Disallow: /reverse-geocoding
 Disallow: /weather
-Disallow: /static

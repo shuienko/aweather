@@ -3,389 +3,154 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Weather for Astrophotographers</title>
+    <meta name="color-scheme" content="light">
+    <title>aweather | forecast for astrophotographers</title>
     <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
     <link rel="icon" href="/static/favicon.ico" sizes="any">
     <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/static/favicon-16x16.png">
     <link rel="icon" type="image/png" sizes="192x192" href="/static/favicon-192x192.png">
     <link rel="icon" type="image/png" sizes="512x512" href="/static/favicon-512x512.png">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/uikit/3.16.22/css/uikit.min.css" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/uikit/3.16.22/js/uikit.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/uikit/3.16.22/js/uikit-icons.min.js"></script>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .forecast-header {
-            text-align: center;
+        :root{
+            --bg: #f7f9fc;
+            --panel: #ffffff;
+            --text: #0f172a;
+            --muted: #64748b;
+            --accent: #2563eb;
+            --border: #e5e7eb;
         }
-        .forecast-details {
-            font-weight: bold;
-            text-align: center;
-            margin-top: 20px;
-            font-size: 1.2rem;
-        }
-		.forecast-table-container {
-    		overflow-x: auto;
-    		white-space: nowrap;
-			text-align: center;
-		}
-        @media (max-width: 560px) {
-            .forecast-table-container pre {
-                font-size: 0.7rem;
-            }
-        }
-		.forecast-legend-container {
-    		overflow-x: auto;
-    		white-space: nowrap;
-			text-align: left;
-		}
-        .forecast-legend-container pre b, 
-        .forecast-legend-container pre strong {
-            color: #007bff;  /* Blue color */
-            font-family: inherit;  /* Keep the same monospace font */
-            font-weight: normal;
-        }
-        @media (max-width: 560px) {
-            .forecast-legend-container pre {
-                white-space: pre-wrap;
-                word-wrap: break-word;
-            }
-        }
-        .forecast-legend {
-			display: inline-block;
-            border: none;
-			text-align: left;
-            box-shadow: none;
-        }
-        .forecast-about-container {
-            text-align: left;
-            word-wrap: break-word;
-        }  
-        .forecast-about {
-            border: none;
-            text-align: left;
-            box-shadow: none;
-            white-space: normal;
-        }
-        .forecast-table {
-			display: inline-block;
-            border: none;
-			text-align: center;
-            box-shadow: none;
-        }
-        .footer {
-            margin-top: 50px;
-            text-align: center;
-            font-size: 0.9rem;
-            color: #555;
-        }
-        #suggestions {
-            max-height: 300px;
-            overflow-y: auto;
-            width: 100%;
-            border: 1px solid #e5e5e5;
-            border-radius: 4px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            margin-top: 4px;
-            background: white;
-            list-style: none;
-            padding-left: 0;
-        }
-
-        /* Individual suggestion items */
-        #suggestions li {
-            padding: 10px 15px;
-            cursor: pointer;
-            border-bottom: 1px solid #f0f0f0;
-            transition: background-color 0.2s ease;
-        }
-
-        #suggestions li:last-child {
-            border-bottom: none;
-        }
-
-        #suggestions li:hover {
-            background-color: #f8f8f8;
-        }
-
-        /* Custom scrollbar for modern browsers */
-        #suggestions::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        #suggestions::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 4px;
-        }
-
-        #suggestions::-webkit-scrollbar-thumb {
-            background: #c1c1c1;
-            border-radius: 4px;
-        }
-
-        #suggestions::-webkit-scrollbar-thumb:hover {
-            background: #a8a8a8;
-        }
-
-        /* Style for the input field to match suggestions */
-        #city {
-            border-radius: 4px;
-            transition: border-color 0.2s ease, box-shadow 0.2s ease;
-        }
-
-        #city:focus {
-            border-color: #1e87f0;
-            box-shadow: 0 0 0 2px rgba(30, 135, 240, 0.1);
-            outline: none;
-        }
-
-        /* Animation for suggestions appearance */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        #suggestions {
-            animation: fadeIn 0.2s ease-out;
-        }
+        html, body { background: var(--bg); color: var(--text); }
+        body, input, button, select, textarea { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+        /* Hide empty forecast box until data arrives */
+        #weatherResult:empty { display: none; }
+            /* Bold style for rows with ok status */
+            .ok-row { font-weight: 700; }
+        /* Suggestions dropdown */
+        #suggestions { position: absolute; left: 0; right: 0; top: calc(100% + 6px); z-index: 50; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 10px 30px rgba(2,6,23,0.08); list-style: none; padding-left: 0; max-height: 340px; overflow: auto; }
+        #suggestions li { padding: 10px 14px; cursor: pointer; border-bottom: 1px solid #f1f5f9; }
+        #suggestions li:last-child { border-bottom: none; }
+        #suggestions li:hover { background: #f8fafc; }
     </style>
+    <script src="/static/app.js" defer></script>
 </head>
 <body>
-    <div class="uk-container uk-margin-top">
-        <h2 class="uk-heading-divider forecast-header">Weather for Astrophotographers</h2>
-        
-        <div class="uk-grid-small uk-flex-middle" uk-grid>
-            <div class="uk-width-expand">
-                <input class="uk-input" id="city" type="text" placeholder="e.g., London" value="%s" oninput="fetchSuggestions(this.value)">
-                <ul id="suggestions" style="position: absolute; z-index: 1000; background: rgb(238, 239, 252); display: none;"></ul>
+    <div class="mx-auto max-w-3xl px-4 py-8">
+        <header class="text-center mb-6">
+            <h1 class="text-3xl font-semibold tracking-tight">aweather</h1>
+            <p class="text-[15px] text-slate-500 mt-2">Minimal, focused forecast for astrophotographers</p>
+        </header>
+
+        <div class="mt-2 mb-12 flex flex-wrap items-center justify-center gap-2 text-[13px]">
+            <div class="flex items-center gap-1">
+                <button id="unitTempC" type="button" class="flex items-center justify-center rounded-full border border-blue-600 bg-white h-7 w-14 text-[11px] text-blue-600 hover:bg-blue-50">°C</button>
+                <button id="unitTempF" type="button" class="flex items-center justify-center rounded-full border border-blue-600 bg-white h-7 w-14 text-[11px] text-blue-600 hover:bg-blue-50">°F</button>
             </div>
-            <div>
-                <button class="uk-button uk-button-primary" onclick="fetchWeather()">Get Forecast</button>
+            <span aria-hidden="true" class="px-1 text-slate-300 select-none hidden md:inline">|</span>
+            <div class="flex items-center gap-1">
+                <button id="unitWindKmh" type="button" class="flex items-center justify-center rounded-full border border-blue-600 bg-white h-7 w-14 text-[11px] text-blue-600 hover:bg-blue-50">km/h</button>
+                <button id="unitWindMph" type="button" class="flex items-center justify-center rounded-full border border-blue-600 bg-white h-7 w-14 text-[11px] text-blue-600 hover:bg-blue-50">mph</button>
+            </div>
+            <span aria-hidden="true" class="px-1 text-slate-300 select-none hidden md:inline">|</span>
+            <div class="flex items-center gap-1">
+                <button id="time24h" type="button" class="flex items-center justify-center rounded-full border border-blue-600 bg-white h-7 w-14 text-[11px] text-blue-600 hover:bg-blue-50">24h</button>
+                <button id="time12h" type="button" class="flex items-center justify-center rounded-full border border-blue-600 bg-white h-7 w-14 text-[11px] text-blue-600 hover:bg-blue-50">12h</button>
             </div>
         </div>
 
-        <!-- Hidden fields to store latitude and longitude -->
+        <div class="relative flex gap-3 items-stretch">
+            <div class="relative flex-1">
+                <div class="pointer-events-none absolute inset-y-0 left-3 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="h-5 w-5 text-slate-400"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21 21-4.35-4.35M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z"/></svg>
+                </div>
+                <input id="city" type="text" value="%s" placeholder="Search city, region, country" oninput="fetchSuggestions(this.value)"
+                       class="w-full rounded-xl border border-slate-200 bg-white/90 pl-10 pr-3 py-3 text-[15px] outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100 placeholder:text-slate-400" />
+                <ul id="suggestions" style="display:none;"></ul>
+             </div>
+             <div class="relative shrink-0 group">
+                 <button id="geoBtn" onclick="useMyLocation()" aria-label="Use my location" aria-describedby="geoTip"
+                         class="flex items-center justify-center rounded-full border border-slate-200 bg-white p-2 text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="h-5 w-5 text-slate-600">
+                         <circle cx="12" cy="12" r="3" stroke-width="2" />
+                         <path d="M12 2v4M12 18v4M2 12h4M18 12h4" stroke-width="2" stroke-linecap="round" />
+                     </svg>
+                 </button>
+                 <div id="geoTip" role="tooltip"
+                      class="pointer-events-none absolute -bottom-1 left-1/2 -translate-x-1/2 translate-y-full whitespace-nowrap rounded-md bg-slate-900 text-white text-[11px] px-2.5 py-1 shadow-lg opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
+                     Use my location
+                     <div class="absolute -top-1 left-1/2 -translate-x-1/2 h-2 w-2 rotate-45 bg-slate-900"></div>
+                 </div>
+             </div>
+            <button id="fetchBtn" onclick="fetchWeather()"
+                    class="shrink-0 rounded-xl bg-blue-600 px-4 py-3 text-white font-medium shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-200">
+                Get forecast
+            </button>
+        </div>
+
+        <div id="error" style="display:none" class="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">Error</div>
+
         <input type="hidden" id="latitude" value="%s">
         <input type="hidden" id="longitude" value="%s">
 
-        <div id="forecastDetails" class="forecast-details" style="display: none;"></div>
+        <div id="forecastDetails" style="display:none" class="mt-4 text-center text-[15px] text-slate-600 font-medium"></div>
 
-		<div class="forecast-table-container">
-	        <pre id="weatherResult" class="uk-margin-top forecast-table"></pre>
-		</div>
-
-        <div class="forecast-about-container">
-            <pre class="forecast-about">
-                <h3>About</h3>
-aweather is clean, ultra-minimalist, no-nonsense weather forecast for astrophotographers. 
-Something that answers one simple question: <b>"Is the weather good for astrophotography tonight, in the next 3 hours, or tomorrow?"</b>.
-No humidity, no precipitation, no pressure, or dew point to fuss over. Just cloud cover, wind speed, and a simple "ok" when conditions are good.
-            </pre>
+        <div class="mt-3">
+            <div class="text-center">
+                <div id="weatherResult" class="space-y-3"></div>
+                <div id="loader" style="display:none" class="mt-3 text-center">
+                    <div class="inline-block h-5 w-5 animate-spin rounded-full border-2 border-blue-500 border-t-transparent"></div>
+                </div>
+            </div>
         </div>
 
-        <div class="forecast-legend-container">
-            <pre class="forecast-legend">
-                <h3>Table</h3>
-<b>| hour</b>           - time of the day
-<b>| ok?</b>            - weather status; "ok" = cloud cover is below 25%% and wind speed is below 15 km/h
-<b>| temp</b>           - temperature in Celsius
-<b>| moon</b>           - Moon illumination percentage
-<b>| low, mid, high</b> - cloud cover percentage at different altitudes
-<b>| wind</b>           - wind speed in km/h
-<b>| gusts</b>          - wind gusts in km/h
-<b>| seeing</b>         - seeing conditions in arcseconds
+        
 
-<b>| top info</b>       - date; rise/set time for Moon and Sun. "*" next to the time means next/previous day.
-            </pre>
-        </div>
+        <section class="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <h2 class="text-lg font-semibold mb-1">About</h2>
+            <p class="text-slate-600 text-[15px] mt-1">aweather is a clean, ultra‑minimalist forecast for astrophotographers. It answers one question: <b>Is the weather good for astrophotography tonight, in the next 3 hours, or tomorrow?</b> No humidity, precipitation, pressure, or dew point — just cloud cover, wind speed, and a simple “ok” when conditions are good.</p>
+        </section>
 
-        <div class=forecast-legend-container>
-            <pre class=forecast-legend>
-                <h3>Contact & Links</h3>
-<b>|</b> All information comes from <a href="https://open-meteo.com/">Open-Meteo.com</a> API.
-<b>|</b> Source code is available on <a href="https://github.com/shuienko/aweather">GitHub</a>. Pull requests are welcome.
-<b>|</b> And if you like this page, please consider supporting me using the button below. Thank you!
+        <section class="mt-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <h2 class="text-lg font-semibold mb-1">Legend</h2>
+            <pre class="text-[13px] md:text-[13.5px] leading-relaxed text-slate-700 mt-2 whitespace-pre overflow-x-auto">
+<b>• hour</b>           - time of the day
+<b>• ok?</b>            - status; "ok" = (cloud cover < 25%%) and (wind speed < 15 km/h)
+<b>• temp</b>           - temperature (°C or °F)
+<b>• moon</b>           - Moon illumination percentage
+<b>• low, mid, high</b> - cloud cover percentage at different altitudes
+<b>• wind</b>           - wind speed (km/h or mph)
+<b>• gusts</b>          - wind gusts (km/h or mph)
+<b>• seeing</b>         - seeing index (lower is better)
+<b>• top info</b>       - date; rise/set time for Moon and Sun (12h or 24h). "*" means next/previous day
             </pre>
-        </div>        
-        <div class="footer">
-                <form action="https://www.paypal.com/donate" method="post" target="_top">
+        </section>
+
+        <section class="mt-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <h2 class="text-lg font-semibold mb-2">Contact & Links</h2>
+            <div class="text-slate-600 text-[15px] space-y-1">
+                <div>• All information comes from <a class="text-blue-600 hover:underline" href="https://open-meteo.com/">Open‑Meteo.com</a> API.</div>
+                <div>• Source code: <a class="text-blue-600 hover:underline" href="https://github.com/shuienko/aweather">GitHub</a> (pull requests welcome).</div>
+                <div>• If you like this page, please consider supporting me using the button below. Thank you!</div>
+            </div>
+        </section>
+
+        <footer class="mt-6 text-center text-sm text-slate-500">
+            <form action="https://www.paypal.com/donate" method="post" target="_top" class="mb-3">
                 <input type="hidden" name="hosted_button_id" value="R3TWPEY9X4YKA" />
-                <input type="image" src="https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif" border="0" name="submit" title="PayPal - The safer, easier way to pay online!" alt="Donate with PayPal button" />
-                <img alt="" border="0" src="https://www.paypal.com/en_US/i/scr/pixel.gif" width="1" height="1" />
+                <button type="submit" aria-label="Donate with PayPal"
+                        class="inline-flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white font-medium shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-4 w-4 text-white/90">
+                        <path d="M12 21.35 10.55 20.03C5.4 15.36 2 12.28 2 8.5 2 6 4 4 6.5 4c1.54 0 3.04.99 3.57 2.36h.87C11.46 4.99 12.96 4 14.5 4 17 4 19 6 19 8.5c0 3.78-3.4 6.86-8.55 11.53L12 21.35z"/>
+                    </svg>
+                    Donate
+                </button>
             </form>
-            © aweather | <a href="https://open-meteo.com/">Weather data by Open-Meteo.com</a>
-        </div>
+            © aweather | <a class="text-blue-600 hover:underline" href="https://open-meteo.com/">Weather data by Open‑Meteo.com</a>
+        </footer>
     </div>
 
-    <script>
-        // Attach event listeners after DOM is fully loaded
-        document.addEventListener("DOMContentLoaded", function () {
-            // Initialize variables after DOM is fully loaded
-            const cityNameInput = document.getElementById("city");
-            const latitudeInput = document.getElementById("latitude");
-            const longitudeInput = document.getElementById("longitude");
-            const forecastDetails = document.getElementById("forecastDetails");
-            const weatherResult = document.getElementById("weatherResult");
-        
-            // Attach keydown listener to cityNameInput
-            cityNameInput.addEventListener("input", function(event) {
-                if (event.inputType === "deleteContentBackward") {
-                cityNameInput.value = "";
-                latitudeInput.value = "";
-                longitudeInput.value = "";
-                document.getElementById('suggestions').style.display = 'none';
-                clearTimeout(debounceTimer);
-            }
-            });
-
-            // Add click event listener to document to close suggestions when clicking outside
-            document.addEventListener('click', function(e) {
-                    const suggestions = document.getElementById('suggestions');
-                    const cityInput = document.getElementById('city');
-                    if (e.target !== cityInput && !suggestions.contains(e.target)) {
-                        suggestions.style.display = 'none';
-                    }
-            });
-        
-            // Attach listener for Enter key to fetch weather
-            cityNameInput.addEventListener("keypress", function(event) {
-                if (event.key === "Enter") {
-                    event.preventDefault();
-                    fetchWeather();
-                }
-            });
-        
-            // Load cookies on page load
-            loadCookies();
-        });
-        
-        // ---- Helper Functions (Outside DOMContentLoaded) ----
-        
-        // Fetch suggestions for city input
-        let debounceTimer;
-        function fetchSuggestions(query) {
-            clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(() => {
-
-            // Immediately return if the input is empty
-            if (!query || query.length < 2) {
-                suggestions.style.display = 'none';
-                return;
-            }
-
-            fetch('/suggestions?q=' + encodeURIComponent(query))
-                .then(response => response.json())
-                .then(data => {
-                    const suggestions = document.getElementById('suggestions');
-                    suggestions.innerHTML = '';
-                    if (data.length > 0) {
-                        suggestions.style.display = 'block';
-                        data.forEach(function(item) {
-                            const regions = [item.admin1, item.admin2, item.admin3, item.admin4]
-                                .filter(region => region && region.trim().length > 0)
-                                .join(', ');
-                            const country = item.country && item.country.trim().length > 0 ? item.country : item.country_code;
-                            const fullName = item.name + (regions ? ', ' + regions : '') + ', ' + country;
-        
-                            const li = document.createElement('li');
-                            li.textContent = fullName;
-                            li.onclick = function(e) {
-                                e.stopPropagation(); // Prevent event bubbling
-                                document.getElementById("city").value = fullName;
-                                document.getElementById("latitude").value = item.latitude;
-                                document.getElementById("longitude").value = item.longitude;
-                                suggestions.style.display = 'none';
-                                clearTimeout(debounceTimer);
-
-                                // Automatically fetch forecast when city is selected
-                                fetchWeather();
-                            };
-                            suggestions.appendChild(li);
-                        });
-                    } else {
-                        suggestions.style.display = 'none';
-                    }
-                })
-                .catch(error => {
-                    console.error('Error fetching suggestions:', error);
-                    suggestions.style.display = 'none';
-            });
-            }, 300);
-        }
-        
-        // Fetch weather data
-        function fetchWeather() {
-            const cityNameInput = document.getElementById("city");
-            const latitudeInput = document.getElementById("latitude");
-            const longitudeInput = document.getElementById("longitude");
-            const forecastDetails = document.getElementById("forecastDetails");
-            const weatherResult = document.getElementById("weatherResult");
-        
-            if (!cityNameInput.value.includes(", ")) {
-                alert("Please select a valid suggestion from the list");
-                return;
-            }
-            const cityName = cityNameInput.value;
-            if (cityName.length < 2) {
-                alert("Please enter a city name with at least 2 characters.");
-                return;
-            }
-            const latitude = latitudeInput.value;
-            const longitude = longitudeInput.value;
-            if (!latitude || !longitude || isNaN(latitude) || isNaN(longitude)) {
-                alert("Please select a valid suggestion from the list");
-                return;
-            }
-        
-            const shortName = cityName.split(",")[0].trim();
-            const country = cityName.split(",").slice(-1)[0].trim();
-        
-            forecastDetails.textContent = shortName + ", " + country + "  |  " + latitude + ",  " + longitude;
-            forecastDetails.style.display = "block";
-        
-            fetch("/weather?lat=" + encodeURIComponent(latitude) + "&lon=" + encodeURIComponent(longitude))
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error("Error fetching weather data: " + response.statusText);
-                    }
-                    return response.text();
-                })
-                .then(data => {
-                    weatherResult.textContent = data;
-                })
-                .catch(error => {
-                    console.error(error);
-                    alert("Failed to fetch weather data. Please try again later.");
-                });
-        
-            const maxAge = "max-age=" + (365 * 24 * 60 * 60);
-            document.cookie = "cityName=" + encodeURIComponent(shortName + ", " + country) + "; path=/; " + maxAge;
-            document.cookie = "latitude=" + encodeURIComponent(latitude) + "; path=/; " + maxAge;
-            document.cookie = "longitude=" + encodeURIComponent(longitude) + "; path=/; " + maxAge;
-        }
-        
-        // Load cookies into inputs on page load
-        function loadCookies() {
-            const cookies = document.cookie.split("; ");
-            const cookieMap = {};
-            cookies.forEach(cookie => {
-                const [key, value] = cookie.split("=");
-                cookieMap[key] = decodeURIComponent(value);
-            });
-        
-            const cityNameInput = document.getElementById("city");
-            const latitudeInput = document.getElementById("latitude");
-            const longitudeInput = document.getElementById("longitude");
-        
-            if (cookieMap.cityName) {
-                cityNameInput.value = cookieMap.cityName;
-            }
-            if (cookieMap.latitude) {
-                latitudeInput.value = cookieMap.latitude;
-            }
-            if (cookieMap.longitude) {
-                longitudeInput.value = cookieMap.longitude;
-            }
-        }
-        </script>        
+    
 </body>
 </html>

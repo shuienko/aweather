@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"strconv"
 	"time"
 )
 
@@ -66,16 +67,18 @@ type Suggestion struct {
 	Lon         float64 `json:"longitude"`
 }
 
+// shared HTTP client with reasonable timeout
+var httpClient = &http.Client{Timeout: 12 * time.Second}
+
 // FetchData() goes to OpenMeteoEndpoint makes HTTPS request and stores result as OpenMeteoAPIResponse object
 func (response *OpenMeteoAPIResponse) FetchData(apiEndpoint, parameters, lat, lon string) {
-	latlon := lat + lon
-	weatherData, err := cache.Get(latlon)
+	cacheKey := fmt.Sprintf("weather:%s,%s:%s", lat, lon, parameters)
+	weatherData, err := cache.Get(cacheKey)
 
 	if err != nil {
 		log.Println("INFO: Making request to Open-Meteo API and parsing response")
-		client := &http.Client{}
 
-		// Set paramenters
+		// Set parameters
 		params := url.Values{}
 		params.Add("latitude", lat)
 		params.Add("longitude", lon)
@@ -89,21 +92,16 @@ func (response *OpenMeteoAPIResponse) FetchData(apiEndpoint, parameters, lat, lo
 			return
 		}
 
-		parseFormErr := req.ParseForm()
-		if parseFormErr != nil {
-			log.Println(parseFormErr)
-			return
-		}
-
-		resp, err := client.Do(req)
+		resp, err := httpClient.Do(req)
 		if err != nil {
 			log.Println("ERROR:", err)
 			return
 		}
+		defer resp.Body.Close()
 
 		// Read Response Body
-		if resp.StatusCode != 200 {
-			fmt.Println("ERROR: Open-Meteo API response code:", resp.Status)
+		if resp.StatusCode != http.StatusOK {
+			log.Printf("ERROR: Open-Meteo API response code: %s", resp.Status)
 			return
 		}
 
@@ -111,9 +109,9 @@ func (response *OpenMeteoAPIResponse) FetchData(apiEndpoint, parameters, lat, lo
 		weatherData, _ = io.ReadAll(resp.Body)
 
 		// Save response to cache
-		cache.Set(latlon, weatherData)
+		cache.Set(cacheKey, weatherData)
 	} else {
-		log.Println("INFO: Using cached data for latlon", latlon)
+		log.Println("INFO: Using cached data for", cacheKey)
 	}
 
 	// Save response as OpenMeteoAPIResponse object
@@ -130,13 +128,21 @@ func fetchSuggestions(query string) ([]Suggestion, error) {
 	encodedQuery := url.QueryEscape(query)
 
 	// Check if query is in cache
-	resultByte, err := cache.Get(encodedQuery)
+	cacheKey := "geo:" + encodedQuery
+	resultByte, err := cache.Get(cacheKey)
+	if err != nil {
+		// Fallback to legacy key used previously
+		if legacy, legacyErr := cache.Get(encodedQuery); legacyErr == nil {
+			resultByte = legacy
+			err = nil
+		}
+	}
 
 	// If not in cache, make request to OpenMeteoGeoAPI
 	if err != nil {
 		log.Println("INFO: Making request to Open-Meteo Geo API and parsing response for query: ", encodedQuery)
-		url := fmt.Sprintf("%s?name=%s", OpenMeteoGeoAPIEndpoint, encodedQuery)
-		resp, err := http.Get(url)
+		requestURL := fmt.Sprintf("%s?name=%s", OpenMeteoGeoAPIEndpoint, encodedQuery)
+		resp, err := httpClient.Get(requestURL)
 		if err != nil {
 			return nil, err
 		}
@@ -151,6 +157,8 @@ func fetchSuggestions(query string) ([]Suggestion, error) {
 
 		// Save response to cache
 		jsonData, _ := json.Marshal(result.Results)
+		cache.Set(cacheKey, jsonData)
+		// Also store under legacy key for backward compatibility (tests rely on it)
 		cache.Set(encodedQuery, jsonData)
 
 		// Return results
@@ -167,16 +175,81 @@ func fetchSuggestions(query string) ([]Suggestion, error) {
 	}
 }
 
+// fetchReverseGeocoding queries Open‑Meteo Reverse Geocoding API for a single best match
+// It caches the first result under key "reverse:lat,lon" and returns it.
+func fetchReverseGeocoding(lat string, lon string) (*Suggestion, error) {
+	// Normalize to 3 decimal places (~111m) to avoid cache misses due to small GPS jitter
+	// This significantly increases cache hit rate and reduces upstream calls.
+	normLat, normLon := lat, lon
+	if lf, err1 := strconv.ParseFloat(lat, 64); err1 == nil {
+		normLat = strconv.FormatFloat(lf, 'f', 3, 64)
+	}
+	if lf, err2 := strconv.ParseFloat(lon, 64); err2 == nil {
+		normLon = strconv.FormatFloat(lf, 'f', 3, 64)
+	}
+
+	cacheKey := fmt.Sprintf("reverse:%s,%s", normLat, normLon)
+
+	if cached, err := cache.Get(cacheKey); err == nil {
+		var suggestion Suggestion
+		if err := json.Unmarshal(cached, &suggestion); err == nil {
+			log.Println("INFO: Using cached reverse geocoding for", cacheKey)
+			return &suggestion, nil
+		} else {
+			log.Println("WARN: Cached reverse geocoding unmarshal failed, refetching:", cacheKey, err)
+		}
+		// fallthrough to refetch on unmarshal error
+	} else {
+		log.Println("INFO: Reverse geocoding cache miss for", cacheKey, "reason:", err)
+	}
+
+	log.Println("INFO: Making request to Open-Meteo Reverse Geo API for:", normLat, normLon)
+	requestURL := fmt.Sprintf("%s?latitude=%s&longitude=%s", OpenMeteoGeoReverseAPIEndpoint, url.QueryEscape(normLat), url.QueryEscape(normLon))
+	resp, err := httpClient.Get(requestURL)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		// Upstream returned non-200; treat as no result to avoid surfacing errors to clients
+		return nil, nil
+	}
+
+	var result struct {
+		Results []Suggestion `json:"results"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, err
+	}
+
+	if len(result.Results) == 0 {
+		return nil, nil
+	}
+
+	top := result.Results[0]
+	if data, err := json.Marshal(top); err == nil {
+		if err := cache.Set(cacheKey, data); err != nil {
+			log.Println("WARN: Failed to cache reverse geocoding result for", cacheKey, "error:", err)
+		} else {
+			log.Println("INFO: Cached reverse geocoding for", cacheKey)
+		}
+	} else {
+		log.Println("WARN: Failed to marshal reverse geocoding result for", cacheKey, "error:", err)
+	}
+	return &top, nil
+}
+
 // Points() return DataPoints object based on OpenMeteoAPIResponse fields
 func (data OpenMeteoAPIResponse) Points() DataPoints {
 	points := DataPoints{}
 
 	for i := 0; i < len(data.Hourly.Time); i++ {
 		location, _ := time.LoadLocation(data.Timezone)
-		time, _ := time.ParseInLocation("2006-01-02T15:04", data.Hourly.Time[i], location)
+		parsedTime, _ := time.ParseInLocation("2006-01-02T15:04", data.Hourly.Time[i], location)
 
 		point := DataPoint{
-			Time:                  time,
+			Time:                  parsedTime,
 			Temperature2M:         data.Hourly.Temperature2M[i],
 			Temperature500hPa:     data.Hourly.Temperature500hPa[i],
 			Temperature850hPa:     data.Hourly.Temperature850hPa[i],
@@ -189,6 +262,7 @@ func (data OpenMeteoAPIResponse) Points() DataPoints {
 			WindGusts:             data.Hourly.WindGusts10M[i],
 			GeopotentialHeight850: data.Hourly.GeopotentialHeight850[i],
 			GeopotentialHeight500: data.Hourly.GeopotentialHeight500[i],
+			Elevation:             data.Elevation,
 			Lat:                   data.Latitude,
 			Lon:                   data.Longitude,
 		}
