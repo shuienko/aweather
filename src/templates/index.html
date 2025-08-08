@@ -40,7 +40,7 @@
     <div class="mx-auto max-w-3xl px-4 py-8">
         <header class="text-center mb-6">
             <h1 class="text-3xl font-semibold tracking-tight">aweather</h1>
-            <p class="text-[15px] text-slate-500 mt-2">Minimal, focused forecast for astrophotographers</p>
+            <p class="text-[15px] text-slate-500 mt-2">minimal, focused forecast for astrophotographers</p>
         </header>
 
         <div class="mt-2 mb-12 flex flex-wrap items-center justify-center gap-2 text-[13px]">
@@ -70,7 +70,7 @@
                 <ul id="suggestions" style="display:none;"></ul>
              </div>
              <div class="relative shrink-0 group">
-                 <button id="geoBtn" onclick="useMyLocation()" aria-label="Use my location" aria-describedby="geoTip"
+                 <button id="geoBtn" onclick="useMyLocation()" aria-label="use my location" aria-describedby="geoTip"
                          class="flex items-center justify-center rounded-full border border-slate-200 bg-white p-2 text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="h-5 w-5 text-slate-600">
                          <circle cx="12" cy="12" r="3" stroke-width="2" />
@@ -79,13 +79,13 @@
                  </button>
                  <div id="geoTip" role="tooltip"
                       class="pointer-events-none absolute -bottom-1 left-1/2 -translate-x-1/2 translate-y-full whitespace-nowrap rounded-md bg-slate-900 text-white text-[11px] px-2.5 py-1 shadow-lg opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
-                     Use my location
+                     use my location
                      <div class="absolute -top-1 left-1/2 -translate-x-1/2 h-2 w-2 rotate-45 bg-slate-900"></div>
                  </div>
              </div>
             <button id="fetchBtn" onclick="fetchWeather()"
                     class="shrink-0 rounded-xl bg-blue-600 px-4 py-3 text-white font-medium shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-200">
-                Get forecast
+                forecast
             </button>
         </div>
 
@@ -108,12 +108,12 @@
         
 
         <section class="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 class="text-lg font-semibold mb-1">About</h2>
-            <p class="text-slate-600 text-[15px] mt-1">aweather is a clean, ultra‑minimalist forecast for astrophotographers. It answers one question: <b>Is the weather good for astrophotography tonight, in the next 3 hours, or tomorrow?</b> No humidity, precipitation, pressure, or dew point — just cloud cover, wind speed, and a simple “ok” when conditions are good.</p>
+            <h2 class="text-lg font-semibold mb-1">about</h2>
+            <p class="text-slate-600 text-[15px] mt-1">aweather is a clean, ultra‑minimalist weather forecast for astrophotographers. It answers one question: <b>Is the weather good for astrophotography tonight, in the next 3 hours, or tomorrow?</b> No humidity, precipitation, pressure, or dew point — just cloud cover, wind speed, and a simple “ok” when conditions are good.</p>
         </section>
 
         <section class="mt-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 class="text-lg font-semibold mb-1">Legend</h2>
+            <h2 class="text-lg font-semibold mb-1">legend</h2>
             <pre class="text-[13px] md:text-[13.5px] leading-relaxed text-slate-700 mt-2 whitespace-pre overflow-x-auto">
 <b>• hour</b>           - time of the day
 <b>• ok?</b>            - status; "ok" = (cloud cover < 25%%) and (wind speed < 15 km/h)
@@ -123,30 +123,19 @@
 <b>• wind</b>           - wind speed (km/h or mph)
 <b>• gusts</b>          - wind gusts (km/h or mph)
 <b>• seeing</b>         - seeing index (lower is better)
-<b>• top info</b>       - date; rise/set time for Moon and Sun (12h or 24h). "*" means next/previous day
+<b>• top info</b>       - date; rise/set time for Moon and Sun. "*" means next/previous day
             </pre>
         </section>
 
         <section class="mt-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 class="text-lg font-semibold mb-2">Contact & Links</h2>
+            <h2 class="text-lg font-semibold mb-2">contact & info</h2>
             <div class="text-slate-600 text-[15px] space-y-1">
-                <div>• All information comes from <a class="text-blue-600 hover:underline" href="https://open-meteo.com/">Open‑Meteo.com</a> API.</div>
-                <div>• Source code: <a class="text-blue-600 hover:underline" href="https://github.com/shuienko/aweather">GitHub</a> (pull requests welcome).</div>
-                <div>• If you like this page, please consider supporting me using the button below. Thank you!</div>
+                <div>• all information comes from <a class="text-blue-600 hover:underline" href="https://open-meteo.com/">Open‑Meteo.com</a> API</div>
+                <div>• source code available on <a class="text-blue-600 hover:underline" href="https://github.com/shuienko/aweather">GitHub</a></div>
             </div>
         </section>
 
         <footer class="mt-6 text-center text-sm text-slate-500">
-            <form action="https://www.paypal.com/donate" method="post" target="_top" class="mb-3">
-                <input type="hidden" name="hosted_button_id" value="R3TWPEY9X4YKA" />
-                <button type="submit" aria-label="Donate with PayPal"
-                        class="inline-flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white font-medium shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-200">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-4 w-4 text-white/90">
-                        <path d="M12 21.35 10.55 20.03C5.4 15.36 2 12.28 2 8.5 2 6 4 4 6.5 4c1.54 0 3.04.99 3.57 2.36h.87C11.46 4.99 12.96 4 14.5 4 17 4 19 6 19 8.5c0 3.78-3.4 6.86-8.55 11.53L12 21.35z"/>
-                    </svg>
-                    Donate
-                </button>
-            </form>
             © aweather | <a class="text-blue-600 hover:underline" href="https://open-meteo.com/">Weather data by Open‑Meteo.com</a>
         </footer>
     </div>

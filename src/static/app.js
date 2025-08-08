@@ -256,7 +256,7 @@ async function fetchWeather() {
     return;
   }
 
-  const shortName = cityName ? cityName.split(",")[0].trim() : "My location";
+  const shortName = cityName ? cityName.split(",")[0].trim() : "my location";
   const country = cityName && cityName.includes(",") ? cityName.split(",").slice(-1)[0].trim() : "";
   forecastDetails.textContent = `${shortName}${country ? ", " + country : ""}  |  ${latitude},  ${longitude}`;
   forecastDetails.style.display = "block";
@@ -452,22 +452,22 @@ async function useMyLocation() {
         if (data && data.name) {
           cityInput.value = formatPlaceName(data);
         } else {
-          cityInput.value = "My location";
+          cityInput.value = "my location";
         }
       } else {
-        cityInput.value = "My location";
+        cityInput.value = "my location";
       }
     } catch (_) {
-      cityInput.value = "My location";
+      cityInput.value = "my location";
     } finally {
       geoBtn.disabled = false;
-      geoBtn.setAttribute("aria-label", originalAriaLabel || "Use my location");
+      geoBtn.setAttribute("aria-label", originalAriaLabel || "use my location");
       if (geoIcon) geoIcon.classList.remove("animate-spin");
       fetchWeather();
     }
   } catch (err) {
     geoBtn.disabled = false;
-    geoBtn.setAttribute("aria-label", originalAriaLabel || "Use my location");
+    geoBtn.setAttribute("aria-label", originalAriaLabel || "use my location");
     if (geoIcon) geoIcon.classList.remove("animate-spin");
 
     let msg = "";
