@@ -119,14 +119,14 @@ func (dp DataPoints) Print() string {
 				out += "\n"
 			}
 			// Get Moon and Sun rise and set time
-			moonRise, moonSet := calculateMoonRiseSet(point.Time, point.Lat, point.Lon)
-			sunRise, sunSet := calculateSunRiseSet(point.Time, point.Lat, point.Lon)
+			moonRise, moonSet := calculateRiseSet(point.Time, point.Lat, point.Lon, "moon")
+			sunRise, sunSet := calculateRiseSet(point.Time, point.Lat, point.Lon, "sun")
 
 			// Format for Moon
 			moonRiseString := moonRise.Format("15:04")
 			moonSetString := moonSet.Format("15:04")
 
-			// Handle spacial cases when Moon is not rising or setting on that day
+			// Handle special cases when Moon is not rising or setting on that day
 			if moonRise.Day() != point.Time.Day() {
 				moonRiseString = moonRiseString + "*"
 			}
@@ -136,9 +136,18 @@ func (dp DataPoints) Print() string {
 			}
 
 			// Column widths (align header and rows)
-			wHour, wOK, wTemp, wMoon := 4, 3, 5, 4
-			wLow, wMid, wHigh := 3, 3, 4
-			wWind, wGusts, wSeeing := 5, 5, 6
+			const (
+				wHour   = 4
+				wOK     = 3
+				wTemp   = 5
+				wMoon   = 4
+				wLow    = 3
+				wMid    = 3
+				wHigh   = 4
+				wWind   = 5
+				wGusts  = 5
+				wSeeing = 6
+			)
 
 			// Header
 			header := fmt.Sprintf("%*s | %*s | %*s | %*s | %*s | %*s | %*s | %*s | %*s | %*s\n",
@@ -173,9 +182,18 @@ func (dp DataPoints) Print() string {
 		}
 
 		// Column widths must match header
-		wHour, wOK, wTemp, wMoon := 4, 3, 5, 4
-		wLow, wMid, wHigh := 3, 3, 4
-		wWind, wGusts, wSeeing := 5, 5, 6
+		const (
+			wHour   = 4
+			wOK     = 3
+			wTemp   = 5
+			wMoon   = 4
+			wLow    = 3
+			wMid    = 3
+			wHigh   = 4
+			wWind   = 5
+			wGusts  = 5
+			wSeeing = 6
+		)
 
 		hourStr := fmt.Sprintf("%02d", point.Time.Hour())
 		okStr := status

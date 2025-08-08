@@ -66,7 +66,7 @@ func handleWeather(w http.ResponseWriter, r *http.Request) {
 	log.Printf("INFO: Requested weather data for lat: %s, lon: %s", lat, lon)
 
 	data := OpenMeteoAPIResponse{}
-	data.FetchData(OpenMeteoAPIEndpoint, OpenMeteoAPIParams, float64ToSting(latitude), float64ToSting(longitude))
+	data.FetchData(OpenMeteoAPIEndpoint, OpenMeteoAPIParams, float64ToString(latitude), float64ToString(longitude))
 	weatherTable := data.Points().setMoonIllumination().setSeeing().Print()
 
 	w.Header().Set("Content-Type", "text/plain")
@@ -94,32 +94,29 @@ func handleSuggestions(w http.ResponseWriter, r *http.Request) {
 
 func handleRobots(w http.ResponseWriter, r *http.Request) {
 	log.Printf("INFO: From: %s | User-Agent: %s | Path: %s", r.RemoteAddr, r.UserAgent(), r.URL.Path)
-
-	robotsTxtFile, _ := StaticFiles.ReadFile("static/robots.txt")
-	contentType := "text/plain"
-
-	w.Header().Set("Content-Type", contentType)
-	w.WriteHeader(http.StatusOK)
-	_, err := w.Write(robotsTxtFile)
-	if err != nil {
-		log.Printf("ERROR: Could not write robots.txt: %v", err)
-	}
+	serveEmbeddedFile(w, "static/robots.txt", "text/plain")
 }
 
 func handleFavicon(w http.ResponseWriter, r *http.Request) {
 	log.Printf("INFO: From: %s | User-Agent: %s | Path: %s", r.RemoteAddr, r.UserAgent(), r.URL.Path)
-
-	faviconFile, _ := StaticFiles.ReadFile("static/favicon.ico")
-	contentType := "image/x-icon"
-
-	w.Header().Set("Content-Type", contentType)
-	w.WriteHeader(http.StatusOK)
-	_, err := w.Write(faviconFile)
-	if err != nil {
-		log.Printf("ERROR: Could not write favicon.ico: %v", err)
-	}
+	serveEmbeddedFile(w, "static/favicon.ico", "image/x-icon")
 }
 
-func float64ToSting(f float64) string {
+func float64ToString(f float64) string {
 	return strconv.FormatFloat(f, 'f', 6, 64)
+}
+
+// serveEmbeddedFile writes an embedded static file with the given content type
+func serveEmbeddedFile(w http.ResponseWriter, path, contentType string) {
+	data, err := StaticFiles.ReadFile(path)
+	if err != nil {
+		http.Error(w, "Not found", http.StatusNotFound)
+		log.Printf("ERROR: Could not read %s: %v", path, err)
+		return
+	}
+	w.Header().Set("Content-Type", contentType)
+	w.WriteHeader(http.StatusOK)
+	if _, err := w.Write(data); err != nil {
+		log.Printf("ERROR: Could not write %s: %v", path, err)
+	}
 }

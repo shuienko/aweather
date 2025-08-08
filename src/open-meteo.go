@@ -75,7 +75,7 @@ func (response *OpenMeteoAPIResponse) FetchData(apiEndpoint, parameters, lat, lo
 		log.Println("INFO: Making request to Open-Meteo API and parsing response")
 		client := &http.Client{}
 
-		// Set paramenters
+		// Set parameters
 		params := url.Values{}
 		params.Add("latitude", lat)
 		params.Add("longitude", lon)
@@ -89,17 +89,12 @@ func (response *OpenMeteoAPIResponse) FetchData(apiEndpoint, parameters, lat, lo
 			return
 		}
 
-		parseFormErr := req.ParseForm()
-		if parseFormErr != nil {
-			log.Println(parseFormErr)
-			return
-		}
-
 		resp, err := client.Do(req)
 		if err != nil {
 			log.Println("ERROR:", err)
 			return
 		}
+		defer resp.Body.Close()
 
 		// Read Response Body
 		if resp.StatusCode != 200 {
@@ -135,8 +130,8 @@ func fetchSuggestions(query string) ([]Suggestion, error) {
 	// If not in cache, make request to OpenMeteoGeoAPI
 	if err != nil {
 		log.Println("INFO: Making request to Open-Meteo Geo API and parsing response for query: ", encodedQuery)
-		url := fmt.Sprintf("%s?name=%s", OpenMeteoGeoAPIEndpoint, encodedQuery)
-		resp, err := http.Get(url)
+		requestURL := fmt.Sprintf("%s?name=%s", OpenMeteoGeoAPIEndpoint, encodedQuery)
+		resp, err := http.Get(requestURL)
 		if err != nil {
 			return nil, err
 		}
@@ -173,10 +168,10 @@ func (data OpenMeteoAPIResponse) Points() DataPoints {
 
 	for i := 0; i < len(data.Hourly.Time); i++ {
 		location, _ := time.LoadLocation(data.Timezone)
-		time, _ := time.ParseInLocation("2006-01-02T15:04", data.Hourly.Time[i], location)
+		parsedTime, _ := time.ParseInLocation("2006-01-02T15:04", data.Hourly.Time[i], location)
 
 		point := DataPoint{
-			Time:                  time,
+			Time:                  parsedTime,
 			Temperature2M:         data.Hourly.Temperature2M[i],
 			Temperature500hPa:     data.Hourly.Temperature500hPa[i],
 			Temperature850hPa:     data.Hourly.Temperature850hPa[i],
