@@ -24,40 +24,70 @@ Just cloud cover, wind speed, and a simple "Ok" when conditions are good.
 All information comes from [Open-Meteo.com](https://open-meteo.com/) API.
 
 ## Features
-- **Detailed Weather Forecast**: Provides temperature, wind speed, cloud cover, and moon illumination.
+- **Detailed Weather Forecast**: Provides temperature, cloud cover (low/mid/high), wind speed and gusts, moon illumination, and seeing.
 - **Sun & Moon Calculations**: Calculates sunrise, sunset, moonrise, and moonset times.
 - **Minimalist Interface**: Focuses on relevant metrics for astrophotography, avoiding unnecessary weather details.
 - **Caching**: API responses are cached to improve performance and reduce API calls.
 - **Location Suggestions**: Offers geolocation suggestions for easier city selection.
 
 ## Tech Stack
-- **Frontend**: HTML, JavaScript (UIkit framework for styling)
-- **Backend**: Golang (net/http for web server, Open-Meteo API integration)
-- **Caching**: bigcache for in-memory caching
-- **Geolocation**: Open-Meteo Geocoding API
+- **Frontend**: HTML, JavaScript, Tailwind CSS (via CDN)
+- **Backend**: Golang (net/http for web server, Open‑Meteo API integration)
+- **Caching**: bigcache for in‑memory caching
+- **Geolocation**: Open‑Meteo Geocoding API
+
+## Local development
+
+### Prerequisites
+- Go 1.23+
+
+### Run locally
+```bash
+cd src
+go run .
+```
+
+Open `http://localhost:8080`.
+
+### Run tests
+```bash
+cd src
+go test ./...
+```
+
+## HTTP endpoints
+- `GET /` – HTML UI (served with embedded templates and static assets)
+- `GET /weather?lat=<lat>&lon=<lon>` – returns a plain‑text table forecast
+- `GET /suggestions?q=<query>` – JSON location suggestions (Open‑Meteo Geocoding)
+- `GET /robots.txt`, `GET /favicon.ico`, `GET /static/*`
 
 ## Deployment
 This website is deployed to [aweather.shnk.net/](https://aweather.shnk.net/)
 
 ### Build image
-Feel free to build your own docker container and deploy using any convinient method.
-```
-docker build -t my-app:latest .
+Build a Docker image from the repo root (the Dockerfile expects sources under `src/`).
+```bash
+docker build -t aweather:latest .
 ```
 * The `-t` flag allows you to tag the image with a name and version.
 
 ### Run image
-Use the docker run command to start a container using the image built in the previous step. The application listens on port 8080, so you should map it to an available port on your host machine.
-```
-docker run -d -p 8080:8080 --name my-weather my-app:latest
+Run the container and map port 8080.
+```bash
+docker run -d -p 8080:8080 --name aweather aweather:latest
 ```
 * The `-d` flag runs the container in detached mode (in the background).
 * The `-p 8080:8080` maps the container's `8080` port to your host's `8080` port.
-* The `--name my-running-app` assigns a name to the container for easier management.
+* The `--name aweather` assigns a name to the container for easier management.
 
-#### Open `http://localhost:8080` in your browser to access website
+#### Open `http://localhost:8080` in your browser to access the website
 
-#### Please keep in mind _no Open-Meteo API key set by default_.
+#### No API key required (Open‑Meteo does not require authentication).
+
+## Configuration
+- **Thresholds**: `ok` status means cloud cover ≤ 25% at all levels and wind speed/gusts < 15 km/h (see `MaxCloudCover`, `MaxWindSpeed`).
+- **Cache**: in‑memory cache TTL is 10 minutes.
+- **Port**: the server listens on port `8080`.
 
 ## Seeing evaluation
 
