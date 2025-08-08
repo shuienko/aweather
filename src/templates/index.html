@@ -4,13 +4,26 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="color-scheme" content="light">
+    <meta name="description" content="Minimalist weather forecast for astrophotographers: cloud cover, wind, moon illumination, and seeing index at a glance.">
     <title>aweather | forecast for astrophotographers</title>
+    <link rel="canonical" href="https://aweather.shnk.net/">
     <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
     <link rel="icon" href="/static/favicon.ico" sizes="any">
     <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/static/favicon-16x16.png">
     <link rel="icon" type="image/png" sizes="192x192" href="/static/favicon-192x192.png">
     <link rel="icon" type="image/png" sizes="512x512" href="/static/favicon-512x512.png">
+    
+    <!-- Open Graph / Twitter -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="aweather | forecast for astrophotographers">
+    <meta property="og:description" content="Clear, no‑nonsense forecast focused on astrophotography essentials.">
+    <meta property="og:url" content="https://aweather.shnk.net/">
+    <meta property="og:image" content="https://aweather.shnk.net/static/favicon-512x512.png">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="aweather | forecast for astrophotographers">
+    <meta name="twitter:description" content="Clouds, wind, moon illumination, and seeing index — fast.">
+    <meta name="twitter:image" content="https://aweather.shnk.net/static/favicon-512x512.png">
     
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -34,6 +47,14 @@
         #suggestions li:last-child { border-bottom: none; }
         #suggestions li:hover { background: #f8fafc; }
     </style>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "aweather",
+      "url": "https://aweather.shnk.net/"
+    }
+    </script>
     <script src="/static/app.js" defer></script>
 </head>
 <body>

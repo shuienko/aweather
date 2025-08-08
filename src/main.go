@@ -56,10 +56,31 @@ func main() {
 	// Root index
 	mux.HandleFunc("/", handleIndex)
 
+	// Wrap with canonical host/scheme redirector (skip in local dev)
+	canonicalHost := "aweather.shnk.net"
+	canonicalHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Allow plain HTTP and any host in local dev
+		if r.Host == "localhost:8080" || r.Host == "127.0.0.1:8080" {
+			mux.ServeHTTP(w, r)
+			return
+		}
+
+		scheme := "http"
+		if r.Header.Get("X-Forwarded-Proto") == "https" || r.TLS != nil {
+			scheme = "https"
+		}
+		if r.Host != canonicalHost || scheme != "https" {
+			target := "https://" + canonicalHost + r.URL.RequestURI()
+			http.Redirect(w, r, target, http.StatusMovedPermanently)
+			return
+		}
+		mux.ServeHTTP(w, r)
+	})
+
 	// Harden server with reasonable timeouts
 	srv := &http.Server{
 		Addr:              ":8080",
-		Handler:           mux,
+		Handler:           canonicalHandler,
 		ReadTimeout:       10 * time.Second,
 		ReadHeaderTimeout: 10 * time.Second,
 		WriteTimeout:      15 * time.Second,

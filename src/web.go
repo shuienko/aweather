@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 )
 
 //go:embed templates/index.html
@@ -61,6 +62,8 @@ func handleIndex(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleWeather(w http.ResponseWriter, r *http.Request) {
+	// Advise crawlers not to index API responses
+	w.Header().Set("X-Robots-Tag", "noindex, nofollow")
 	if r.Method != http.MethodGet {
 		w.Header().Set("Allow", http.MethodGet)
 		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
@@ -97,6 +100,7 @@ func handleWeather(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleSuggestions(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("X-Robots-Tag", "noindex, nofollow")
 	if r.Method != http.MethodGet {
 		w.Header().Set("Allow", http.MethodGet)
 		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
@@ -125,6 +129,7 @@ func handleSuggestions(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleReverseGeocoding(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("X-Robots-Tag", "noindex, nofollow")
 	if r.Method != http.MethodGet {
 		w.Header().Set("Allow", http.MethodGet)
 		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
@@ -197,9 +202,11 @@ func handleSitemap(w http.ResponseWriter, r *http.Request) {
 	scheme := requestScheme(r)
 	baseURL := fmt.Sprintf("%s://%s", scheme, r.Host)
 
+	// Use current UTC date as lastmod (format YYYY-MM-DD)
+	lastmod := time.Now().UTC().Format("2006-01-02")
 	sitemap := "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
 		"<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">" +
-		fmt.Sprintf("<url><loc>%s/</loc><changefreq>daily</changefreq><priority>1.0</priority></url>", baseURL) +
+		fmt.Sprintf("<url><loc>%s/</loc><lastmod>%s</lastmod><changefreq>daily</changefreq><priority>1.0</priority></url>", baseURL, lastmod) +
 		"</urlset>"
 
 	w.Header().Set("Content-Type", "application/xml")
