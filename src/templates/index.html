@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="color-scheme" content="light">
-    <title>aweather — Weather for Astrophotographers</title>
+    <title>aweather | forecast for astrophotographers</title>
     <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
     <link rel="icon" href="/static/favicon.ico" sizes="any">
     <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32x32.png">
@@ -36,8 +36,8 @@
 <body>
     <div class="mx-auto max-w-3xl px-4 py-8">
         <header class="text-center mb-6">
-            <h1 class="text-3xl font-semibold tracking-tight">Weather for Astrophotographers</h1>
-            <p class="text-[15px] text-slate-500 mt-2">Minimal, focused forecast for when the sky matters most.</p>
+            <h1 class="text-3xl font-semibold tracking-tight">aweather</h1>
+            <p class="text-[15px] text-slate-500 mt-2">Minimal, focused forecast for astrophotographers</p>
         </header>
 
         <div class="relative flex gap-3 items-stretch">
@@ -49,13 +49,20 @@
                        class="w-full rounded-xl border border-slate-200 bg-white/90 pl-10 pr-3 py-3 text-[15px] outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100 placeholder:text-slate-400" />
                 <ul id="suggestions" style="display:none;"></ul>
              </div>
-             <button id="geoBtn" onclick="useMyLocation()" aria-label="Use my location" title="Use my location"
-                     class="shrink-0 flex items-center justify-center rounded-full border border-slate-200 bg-white p-2 text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
-                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="h-5 w-5 text-slate-600">
-                     <circle cx="12" cy="12" r="3" stroke-width="2" />
-                     <path d="M12 2v4M12 18v4M2 12h4M18 12h4" stroke-width="2" stroke-linecap="round" />
-                 </svg>
-             </button>
+             <div class="relative shrink-0 group">
+                 <button id="geoBtn" onclick="useMyLocation()" aria-label="Use my location" aria-describedby="geoTip"
+                         class="flex items-center justify-center rounded-full border border-slate-200 bg-white p-2 text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
+                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="h-5 w-5 text-slate-600">
+                         <circle cx="12" cy="12" r="3" stroke-width="2" />
+                         <path d="M12 2v4M12 18v4M2 12h4M18 12h4" stroke-width="2" stroke-linecap="round" />
+                     </svg>
+                 </button>
+                 <div id="geoTip" role="tooltip"
+                      class="pointer-events-none absolute -bottom-1 left-1/2 -translate-x-1/2 translate-y-full whitespace-nowrap rounded-md bg-slate-900 text-white text-[11px] px-2.5 py-1 shadow-lg opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
+                     Use my location
+                     <div class="absolute -top-1 left-1/2 -translate-x-1/2 h-2 w-2 rotate-45 bg-slate-900"></div>
+                 </div>
+             </div>
             <button id="fetchBtn" onclick="fetchWeather()"
                     class="shrink-0 rounded-xl bg-blue-600 px-4 py-3 text-white font-medium shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-200">
                 Get forecast
@@ -84,7 +91,7 @@
         </section>
 
         <section class="mt-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 class="text-lg font-semibold mb-1">Table</h2>
+            <h2 class="text-lg font-semibold mb-1">Legend</h2>
             <pre class="text-[13px] md:text-[13.5px] leading-relaxed text-slate-700 mt-2 whitespace-pre overflow-x-auto">
 <b>• hour</b>           - time of the day
 <b>• ok?</b>            - status; "ok" = (cloud cover < 25%%) and (wind speed < 15 km/h)
@@ -94,7 +101,7 @@
 <b>• wind</b>           - wind speed in km/h
 <b>• gusts</b>          - wind gusts in km/h
 <b>• seeing</b>         - seeing conditions in arcseconds
-<b>• top info</b>       - date; rise/set time for Moon and Sun. "*" means next/previous day.
+<b>• top info</b>       - date; rise/set time for Moon and Sun. "*" means next/previous day
             </pre>
         </section>
 
