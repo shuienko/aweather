@@ -23,6 +23,10 @@ COPY --from=build /usr/local/bin/app /usr/local/bin/app
 # Copy tzdata
 COPY --from=build /usr/share/zoneinfo /usr/share/zoneinfo
 
+# Create non-root user and switch
+RUN adduser -D -H -s /sbin/nologin appuser
+USER appuser
+
 # Set entrypoint
 ENTRYPOINT ["/usr/local/bin/app"]
 

@@ -70,8 +70,9 @@ type Suggestion struct {
 // shared HTTP client with reasonable timeout
 var httpClient = &http.Client{Timeout: 12 * time.Second}
 
-// FetchData() goes to OpenMeteoEndpoint makes HTTPS request and stores result as OpenMeteoAPIResponse object
-func (response *OpenMeteoAPIResponse) FetchData(apiEndpoint, parameters, lat, lon string) {
+// FetchData goes to OpenMeteoEndpoint, makes HTTPS request and stores result as OpenMeteoAPIResponse object
+// Returns error when upstream is unavailable or response cannot be parsed.
+func (response *OpenMeteoAPIResponse) FetchData(apiEndpoint, parameters, lat, lon string) error {
 	cacheKey := fmt.Sprintf("weather:%s,%s:%s", lat, lon, parameters)
 	weatherData, err := cache.Get(cacheKey)
 
@@ -88,28 +89,30 @@ func (response *OpenMeteoAPIResponse) FetchData(apiEndpoint, parameters, lat, lo
 		// Make request to Open-Meteo API
 		req, err := http.NewRequest("GET", apiEndpoint+params.Encode(), nil)
 		if err != nil {
-			log.Println("ERROR: Couldn't create new Open-Meteo API request", err)
-			return
+			return fmt.Errorf("create request: %w", err)
 		}
 
 		resp, err := httpClient.Do(req)
 		if err != nil {
-			log.Println("ERROR:", err)
-			return
+			return fmt.Errorf("do request: %w", err)
 		}
 		defer resp.Body.Close()
 
 		// Read Response Body
 		if resp.StatusCode != http.StatusOK {
-			log.Printf("ERROR: Open-Meteo API response code: %s", resp.Status)
-			return
+			return fmt.Errorf("upstream status: %s", resp.Status)
 		}
 
 		log.Println("INFO: Got API response", resp.Status)
-		weatherData, _ = io.ReadAll(resp.Body)
+		weatherData, err = io.ReadAll(resp.Body)
+		if err != nil {
+			return fmt.Errorf("read body: %w", err)
+		}
 
 		// Save response to cache
-		cache.Set(cacheKey, weatherData)
+		if err := cache.Set(cacheKey, weatherData); err != nil {
+			log.Printf("WARN: cache set weather failed for %s: %v", cacheKey, err)
+		}
 	} else {
 		log.Println("INFO: Using cached data for", cacheKey)
 	}
@@ -117,9 +120,9 @@ func (response *OpenMeteoAPIResponse) FetchData(apiEndpoint, parameters, lat, lo
 	// Save response as OpenMeteoAPIResponse object
 	err = json.Unmarshal(weatherData, response)
 	if err != nil {
-		log.Println("ERROR: cannot Unmarshal JSON", err)
-		return
+		return fmt.Errorf("unmarshal weather json: %w", err)
 	}
+	return nil
 }
 
 // fetchSuggestions() makes request to OpenMeteoGeoAPI and returns Suggestion object
@@ -244,24 +247,85 @@ func fetchReverseGeocoding(lat string, lon string) (*Suggestion, error) {
 func (data OpenMeteoAPIResponse) Points() DataPoints {
 	points := DataPoints{}
 
-	for i := 0; i < len(data.Hourly.Time); i++ {
-		location, _ := time.LoadLocation(data.Timezone)
-		parsedTime, _ := time.ParseInLocation("2006-01-02T15:04", data.Hourly.Time[i], location)
+	h := data.Hourly
+	// Determine safe length across all hourly arrays
+	minLen := len(h.Time)
+	candidates := []int{
+		len(h.Temperature2M),
+		len(h.Temperature500hPa),
+		len(h.Temperature850hPa),
+		len(h.CloudCoverLow),
+		len(h.CloudCoverMid),
+		len(h.CloudCoverHigh),
+		len(h.WindSpeed10M),
+		len(h.WindGusts10M),
+		len(h.WindSpeed200hPa),
+		len(h.WindSpeed850hPa),
+		len(h.GeopotentialHeight850),
+		len(h.GeopotentialHeight500),
+	}
+	for _, n := range candidates {
+		if n < minLen {
+			minLen = n
+		}
+	}
+
+	if minLen == 0 {
+		log.Println("WARN: Open-Meteo: no hourly data to build points")
+		return points
+	}
+
+	// Log if arrays are mismatched; we will safely truncate to minLen
+	if len(h.Time) != minLen ||
+		len(h.Temperature2M) != minLen ||
+		len(h.Temperature500hPa) != minLen ||
+		len(h.Temperature850hPa) != minLen ||
+		len(h.CloudCoverLow) != minLen ||
+		len(h.CloudCoverMid) != minLen ||
+		len(h.CloudCoverHigh) != minLen ||
+		len(h.WindSpeed10M) != minLen ||
+		len(h.WindGusts10M) != minLen ||
+		len(h.WindSpeed200hPa) != minLen ||
+		len(h.WindSpeed850hPa) != minLen ||
+		len(h.GeopotentialHeight850) != minLen ||
+		len(h.GeopotentialHeight500) != minLen {
+		log.Printf("WARN: Open-Meteo hourly array length mismatch; truncating to %d (time=%d t2m=%d t500=%d t850=%d cl=%d cm=%d ch=%d w10=%d gust=%d w200=%d w850=%d gph850=%d gph500=%d)",
+			minLen,
+			len(h.Time), len(h.Temperature2M), len(h.Temperature500hPa), len(h.Temperature850hPa),
+			len(h.CloudCoverLow), len(h.CloudCoverMid), len(h.CloudCoverHigh),
+			len(h.WindSpeed10M), len(h.WindGusts10M), len(h.WindSpeed200hPa), len(h.WindSpeed850hPa),
+			len(h.GeopotentialHeight850), len(h.GeopotentialHeight500))
+	}
+
+	// Resolve location once; fall back to UTC if unknown
+	location, locErr := time.LoadLocation(data.Timezone)
+	if locErr != nil || location == nil {
+		location = time.UTC
+	}
+
+	for i := 0; i < minLen; i++ {
+		parsedTime, err := time.ParseInLocation("2006-01-02T15:04", h.Time[i], location)
+		if err != nil {
+			// Fallback to UTC parsing to avoid zero time
+			if t, err2 := time.Parse("2006-01-02T15:04", h.Time[i]); err2 == nil {
+				parsedTime = t
+			}
+		}
 
 		point := DataPoint{
 			Time:                  parsedTime,
-			Temperature2M:         data.Hourly.Temperature2M[i],
-			Temperature500hPa:     data.Hourly.Temperature500hPa[i],
-			Temperature850hPa:     data.Hourly.Temperature850hPa[i],
-			WindSpeed200hPa:       data.Hourly.WindSpeed200hPa[i],
-			WindSpeed850hPa:       data.Hourly.WindSpeed850hPa[i],
-			LowClouds:             data.Hourly.CloudCoverLow[i],
-			MidClouds:             data.Hourly.CloudCoverMid[i],
-			HighClouds:            data.Hourly.CloudCoverHigh[i],
-			WindSpeed:             data.Hourly.WindSpeed10M[i],
-			WindGusts:             data.Hourly.WindGusts10M[i],
-			GeopotentialHeight850: data.Hourly.GeopotentialHeight850[i],
-			GeopotentialHeight500: data.Hourly.GeopotentialHeight500[i],
+			Temperature2M:         h.Temperature2M[i],
+			Temperature500hPa:     h.Temperature500hPa[i],
+			Temperature850hPa:     h.Temperature850hPa[i],
+			WindSpeed200hPa:       h.WindSpeed200hPa[i],
+			WindSpeed850hPa:       h.WindSpeed850hPa[i],
+			LowClouds:             h.CloudCoverLow[i],
+			MidClouds:             h.CloudCoverMid[i],
+			HighClouds:            h.CloudCoverHigh[i],
+			WindSpeed:             h.WindSpeed10M[i],
+			WindGusts:             h.WindGusts10M[i],
+			GeopotentialHeight850: h.GeopotentialHeight850[i],
+			GeopotentialHeight500: h.GeopotentialHeight500[i],
 			Elevation:             data.Elevation,
 			Lat:                   data.Latitude,
 			Lon:                   data.Longitude,
