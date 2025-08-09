@@ -98,7 +98,10 @@ func handleWeather(w http.ResponseWriter, r *http.Request) {
 	log.Printf("INFO: Requested weather data for lat: %s, lon: %s", lat, lon)
 
 	data := OpenMeteoAPIResponse{}
-	data.FetchData(OpenMeteoAPIEndpoint, OpenMeteoAPIParams, float64ToString(latitude), float64ToString(longitude))
+	if err := data.FetchData(OpenMeteoAPIEndpoint, OpenMeteoAPIParams, float64ToString(latitude), float64ToString(longitude)); err != nil {
+		http.Error(w, "Upstream weather service unavailable", http.StatusBadGateway)
+		return
+	}
 	opts := PrintOptions{TemperatureUnit: unitTemp, WindSpeedUnit: unitWind, Use12Hour: time12h}
 	weatherTable := data.Points().setMoonIllumination().setSeeing().PrintWithOptions(opts)
 

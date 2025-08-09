@@ -70,8 +70,9 @@ type Suggestion struct {
 // shared HTTP client with reasonable timeout
 var httpClient = &http.Client{Timeout: 12 * time.Second}
 
-// FetchData() goes to OpenMeteoEndpoint makes HTTPS request and stores result as OpenMeteoAPIResponse object
-func (response *OpenMeteoAPIResponse) FetchData(apiEndpoint, parameters, lat, lon string) {
+// FetchData goes to OpenMeteoEndpoint, makes HTTPS request and stores result as OpenMeteoAPIResponse object
+// Returns error when upstream is unavailable or response cannot be parsed.
+func (response *OpenMeteoAPIResponse) FetchData(apiEndpoint, parameters, lat, lon string) error {
 	cacheKey := fmt.Sprintf("weather:%s,%s:%s", lat, lon, parameters)
 	weatherData, err := cache.Get(cacheKey)
 
@@ -88,28 +89,30 @@ func (response *OpenMeteoAPIResponse) FetchData(apiEndpoint, parameters, lat, lo
 		// Make request to Open-Meteo API
 		req, err := http.NewRequest("GET", apiEndpoint+params.Encode(), nil)
 		if err != nil {
-			log.Println("ERROR: Couldn't create new Open-Meteo API request", err)
-			return
+			return fmt.Errorf("create request: %w", err)
 		}
 
 		resp, err := httpClient.Do(req)
 		if err != nil {
-			log.Println("ERROR:", err)
-			return
+			return fmt.Errorf("do request: %w", err)
 		}
 		defer resp.Body.Close()
 
 		// Read Response Body
 		if resp.StatusCode != http.StatusOK {
-			log.Printf("ERROR: Open-Meteo API response code: %s", resp.Status)
-			return
+			return fmt.Errorf("upstream status: %s", resp.Status)
 		}
 
 		log.Println("INFO: Got API response", resp.Status)
-		weatherData, _ = io.ReadAll(resp.Body)
+		weatherData, err = io.ReadAll(resp.Body)
+		if err != nil {
+			return fmt.Errorf("read body: %w", err)
+		}
 
 		// Save response to cache
-		cache.Set(cacheKey, weatherData)
+		if err := cache.Set(cacheKey, weatherData); err != nil {
+			log.Printf("WARN: cache set weather failed for %s: %v", cacheKey, err)
+		}
 	} else {
 		log.Println("INFO: Using cached data for", cacheKey)
 	}
@@ -117,9 +120,9 @@ func (response *OpenMeteoAPIResponse) FetchData(apiEndpoint, parameters, lat, lo
 	// Save response as OpenMeteoAPIResponse object
 	err = json.Unmarshal(weatherData, response)
 	if err != nil {
-		log.Println("ERROR: cannot Unmarshal JSON", err)
-		return
+		return fmt.Errorf("unmarshal weather json: %w", err)
 	}
+	return nil
 }
 
 // fetchSuggestions() makes request to OpenMeteoGeoAPI and returns Suggestion object
@@ -294,9 +297,20 @@ func (data OpenMeteoAPIResponse) Points() DataPoints {
 			len(h.GeopotentialHeight850), len(h.GeopotentialHeight500))
 	}
 
+	// Resolve location once; fall back to UTC if unknown
+	location, locErr := time.LoadLocation(data.Timezone)
+	if locErr != nil || location == nil {
+		location = time.UTC
+	}
+
 	for i := 0; i < minLen; i++ {
-		location, _ := time.LoadLocation(data.Timezone)
-		parsedTime, _ := time.ParseInLocation("2006-01-02T15:04", h.Time[i], location)
+		parsedTime, err := time.ParseInLocation("2006-01-02T15:04", h.Time[i], location)
+		if err != nil {
+			// Fallback to UTC parsing to avoid zero time
+			if t, err2 := time.Parse("2006-01-02T15:04", h.Time[i]); err2 == nil {
+				parsedTime = t
+			}
+		}
 
 		point := DataPoint{
 			Time:                  parsedTime,

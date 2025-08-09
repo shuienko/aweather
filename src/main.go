@@ -5,6 +5,9 @@ import (
 	"io/fs"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/allegro/bigcache/v3"
@@ -28,8 +31,8 @@ var cache *bigcache.BigCache
 func main() {
 	// Initialize cache with bounded size
 	cacheConfig := bigcache.DefaultConfig(CacheTTL)
-	cacheConfig.MaxEntrySize = 4096   // bytes, avoid oversized entries
-	cacheConfig.HardMaxCacheSize = 32 // MB, keeps memory bounded on Cloud Run
+	cacheConfig.MaxEntrySize = 128 * 1024 // bytes; weather payloads can be large
+	cacheConfig.HardMaxCacheSize = 32     // MB, keeps memory bounded on Cloud Run
 	c, err := bigcache.New(context.Background(), cacheConfig)
 	if err != nil {
 		log.Fatalf("failed to init cache: %v", err)
@@ -68,5 +71,23 @@ func main() {
 	}
 
 	log.Println("Server started on :8080")
-	log.Fatal(srv.ListenAndServe())
+
+	// Run server and handle graceful shutdown
+	go func() {
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("server error: %v", err)
+		}
+	}()
+
+	// Wait for termination signal
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Printf("server shutdown error: %v", err)
+	}
+	log.Println("Server stopped")
 }
