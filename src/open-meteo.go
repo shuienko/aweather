@@ -244,24 +244,74 @@ func fetchReverseGeocoding(lat string, lon string) (*Suggestion, error) {
 func (data OpenMeteoAPIResponse) Points() DataPoints {
 	points := DataPoints{}
 
-	for i := 0; i < len(data.Hourly.Time); i++ {
+	h := data.Hourly
+	// Determine safe length across all hourly arrays
+	minLen := len(h.Time)
+	candidates := []int{
+		len(h.Temperature2M),
+		len(h.Temperature500hPa),
+		len(h.Temperature850hPa),
+		len(h.CloudCoverLow),
+		len(h.CloudCoverMid),
+		len(h.CloudCoverHigh),
+		len(h.WindSpeed10M),
+		len(h.WindGusts10M),
+		len(h.WindSpeed200hPa),
+		len(h.WindSpeed850hPa),
+		len(h.GeopotentialHeight850),
+		len(h.GeopotentialHeight500),
+	}
+	for _, n := range candidates {
+		if n < minLen {
+			minLen = n
+		}
+	}
+
+	if minLen == 0 {
+		log.Println("WARN: Open-Meteo: no hourly data to build points")
+		return points
+	}
+
+	// Log if arrays are mismatched; we will safely truncate to minLen
+	if len(h.Time) != minLen ||
+		len(h.Temperature2M) != minLen ||
+		len(h.Temperature500hPa) != minLen ||
+		len(h.Temperature850hPa) != minLen ||
+		len(h.CloudCoverLow) != minLen ||
+		len(h.CloudCoverMid) != minLen ||
+		len(h.CloudCoverHigh) != minLen ||
+		len(h.WindSpeed10M) != minLen ||
+		len(h.WindGusts10M) != minLen ||
+		len(h.WindSpeed200hPa) != minLen ||
+		len(h.WindSpeed850hPa) != minLen ||
+		len(h.GeopotentialHeight850) != minLen ||
+		len(h.GeopotentialHeight500) != minLen {
+		log.Printf("WARN: Open-Meteo hourly array length mismatch; truncating to %d (time=%d t2m=%d t500=%d t850=%d cl=%d cm=%d ch=%d w10=%d gust=%d w200=%d w850=%d gph850=%d gph500=%d)",
+			minLen,
+			len(h.Time), len(h.Temperature2M), len(h.Temperature500hPa), len(h.Temperature850hPa),
+			len(h.CloudCoverLow), len(h.CloudCoverMid), len(h.CloudCoverHigh),
+			len(h.WindSpeed10M), len(h.WindGusts10M), len(h.WindSpeed200hPa), len(h.WindSpeed850hPa),
+			len(h.GeopotentialHeight850), len(h.GeopotentialHeight500))
+	}
+
+	for i := 0; i < minLen; i++ {
 		location, _ := time.LoadLocation(data.Timezone)
-		parsedTime, _ := time.ParseInLocation("2006-01-02T15:04", data.Hourly.Time[i], location)
+		parsedTime, _ := time.ParseInLocation("2006-01-02T15:04", h.Time[i], location)
 
 		point := DataPoint{
 			Time:                  parsedTime,
-			Temperature2M:         data.Hourly.Temperature2M[i],
-			Temperature500hPa:     data.Hourly.Temperature500hPa[i],
-			Temperature850hPa:     data.Hourly.Temperature850hPa[i],
-			WindSpeed200hPa:       data.Hourly.WindSpeed200hPa[i],
-			WindSpeed850hPa:       data.Hourly.WindSpeed850hPa[i],
-			LowClouds:             data.Hourly.CloudCoverLow[i],
-			MidClouds:             data.Hourly.CloudCoverMid[i],
-			HighClouds:            data.Hourly.CloudCoverHigh[i],
-			WindSpeed:             data.Hourly.WindSpeed10M[i],
-			WindGusts:             data.Hourly.WindGusts10M[i],
-			GeopotentialHeight850: data.Hourly.GeopotentialHeight850[i],
-			GeopotentialHeight500: data.Hourly.GeopotentialHeight500[i],
+			Temperature2M:         h.Temperature2M[i],
+			Temperature500hPa:     h.Temperature500hPa[i],
+			Temperature850hPa:     h.Temperature850hPa[i],
+			WindSpeed200hPa:       h.WindSpeed200hPa[i],
+			WindSpeed850hPa:       h.WindSpeed850hPa[i],
+			LowClouds:             h.CloudCoverLow[i],
+			MidClouds:             h.CloudCoverMid[i],
+			HighClouds:            h.CloudCoverHigh[i],
+			WindSpeed:             h.WindSpeed10M[i],
+			WindGusts:             h.WindGusts10M[i],
+			GeopotentialHeight850: h.GeopotentialHeight850[i],
+			GeopotentialHeight500: h.GeopotentialHeight500[i],
 			Elevation:             data.Elevation,
 			Lat:                   data.Latitude,
 			Lon:                   data.Longitude,

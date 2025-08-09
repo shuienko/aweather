@@ -4,6 +4,7 @@ import (
 	"embed"
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"log"
 	"net/http"
 	"strconv"
@@ -15,6 +16,8 @@ var indexHTML string
 
 //go:embed static/*
 var StaticFiles embed.FS
+
+var indexTmpl = template.Must(template.New("index").Parse(indexHTML))
 
 func handleIndex(w http.ResponseWriter, r *http.Request) {
 	// Only serve the root path
@@ -53,11 +56,18 @@ func handleIndex(w http.ResponseWriter, r *http.Request) {
 		longitude = lonCookie.Value
 	}
 
-	// Insert cookies into template placeholders
-	pageWithCookies := fmt.Sprintf(indexHTML, cityName, latitude, longitude)
-
+	// Render template with automatic HTML escaping
 	w.Header().Set("Content-Type", "text/html")
-	fmt.Fprint(w, pageWithCookies)
+	data := struct {
+		CityName  string
+		Latitude  string
+		Longitude string
+	}{cityName, latitude, longitude}
+	if err := indexTmpl.Execute(w, data); err != nil {
+		log.Printf("ERROR: rendering index: %v", err)
+		http.Error(w, "Template rendering error", http.StatusInternalServerError)
+		return
+	}
 }
 
 func handleWeather(w http.ResponseWriter, r *http.Request) {
