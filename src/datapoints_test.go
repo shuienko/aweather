@@ -138,8 +138,11 @@ func TestPrintWithOptions_UnitsAnd12Hour(t *testing.T) {
 	if !strings.Contains(out, "1pm") {
 		t.Fatalf("Expected 12h time formatting with '1pm', got: %s", out)
 	}
-	if !strings.Contains(out, "50.0") && !strings.Contains(out, "46.0") { // temperature in F 10C->50F
-		t.Fatalf("Expected temperature in F, got: %s", out)
+	if !strings.Contains(out, "50.0") {
+		t.Fatalf("Expected temperature 50.0F for 10C, got: %s", out)
+	}
+	if strings.Contains(out, "46.0") {
+		t.Fatalf("Did not expect 46.0F in output, got: %s", out)
 	}
 }
 
