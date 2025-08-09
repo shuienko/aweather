@@ -48,6 +48,29 @@ func TestFetchData_Success(t *testing.T) {
 	}
 }
 
+func TestFetchData_UsesCache(t *testing.T) {
+	setupCache()
+	// Seed cache with a minimal valid response
+	key := "weather:1.000000,2.000000:temperature_2m"
+	payload := []byte(`{"latitude":1,"longitude":2,"hourly":{"time":["2024-01-01T00:00"],"temperature_2m":[3.0]}}`)
+	if err := cache.Set(key, payload); err != nil {
+		t.Fatalf("failed to seed cache: %v", err)
+	}
+	// Point endpoint to a server that would fail if called
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		t.Fatalf("upstream should not be called when cache hit")
+	}))
+	defer ts.Close()
+
+	resp := OpenMeteoAPIResponse{}
+	if err := resp.FetchData(ts.URL+"?", "temperature_2m", "1.000000", "2.000000"); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resp.Latitude != 1 || len(resp.Hourly.Time) != 1 {
+		t.Fatalf("unexpected decoded cached resp: %+v", resp)
+	}
+}
+
 func TestFetchData_Error(t *testing.T) {
 	setupCache() // Initialize cache
 
@@ -89,6 +112,25 @@ func TestFetchSuggestions_Success(t *testing.T) {
 
 	if len(suggestions) != 1 || suggestions[0].Name != "Berlin" {
 		t.Error("Failed to fetch or parse suggestions correctly")
+	}
+}
+
+func TestFetchReverseGeocoding_CacheAndNormalize(t *testing.T) {
+	setupCache()
+	// Pre-cache a value under normalized key reverse:52.520,13.405
+	key := "reverse:52.520,13.405"
+	payload, _ := json.Marshal(Suggestion{Name: "Cached Berlin", Country: "DE"})
+	if err := cache.Set(key, payload); err != nil {
+		t.Fatalf("failed to seed cache: %v", err)
+	}
+
+	// Values with more precision should normalize to the same key
+	got, err := fetchReverseGeocoding("52.52000", "13.40500")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if got == nil || got.Name != "Cached Berlin" {
+		t.Fatalf("expected cached suggestion, got: %+v", got)
 	}
 }
 
@@ -142,5 +184,33 @@ func TestPoints(t *testing.T) {
 
 	if points[0].Temperature2M != 5.0 {
 		t.Errorf("Expected temperature 5.0, got %f", points[0].Temperature2M)
+	}
+}
+
+func TestPoints_TimeParseFallback(t *testing.T) {
+	// Provide a time string that cannot be parsed with location but can with UTC fallback
+	response := OpenMeteoAPIResponse{
+		Latitude:  0,
+		Longitude: 0,
+		Hourly: Hourly{
+			Time:                  []string{"2024-01-01T00:00"},
+			Temperature2M:         []float64{1},
+			Temperature500hPa:     []float64{0},
+			Temperature850hPa:     []float64{0},
+			CloudCoverLow:         []int64{0},
+			CloudCoverMid:         []int64{0},
+			CloudCoverHigh:        []int64{0},
+			WindSpeed10M:          []float64{0},
+			WindGusts10M:          []float64{0},
+			WindSpeed200hPa:       []float64{0},
+			WindSpeed850hPa:       []float64{0},
+			GeopotentialHeight850: []float64{0},
+			GeopotentialHeight500: []float64{0},
+		},
+		Timezone: "Bad/Timezone", // triggers location fallback
+	}
+	pts := response.Points()
+	if len(pts) != 1 || pts[0].Time.IsZero() {
+		t.Fatalf("Expected one point with non-zero time, got: %+v", pts)
 	}
 }
