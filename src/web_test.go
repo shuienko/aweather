@@ -85,6 +85,160 @@ func TestHandleFavicon(t *testing.T) {
 	}
 }
 
+func TestHandleIndex_NotFound(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "/not-root", nil)
+	rec := httptest.NewRecorder()
+
+	handleIndex(rec, req)
+	if rec.Result().StatusCode != http.StatusNotFound {
+		t.Fatalf("Expected 404 for non-root path, got %d", rec.Result().StatusCode)
+	}
+}
+
+func TestHandleWeather_InvalidNumbers(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "/weather?lat=abc&lon=def", nil)
+	rec := httptest.NewRecorder()
+	handleWeather(rec, req)
+	if rec.Result().StatusCode != http.StatusBadRequest {
+		t.Fatalf("Expected 400 for invalid numbers, got %d", rec.Result().StatusCode)
+	}
+}
+
+func TestHandleWeather_UpstreamError(t *testing.T) {
+	setupCache()
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+	}))
+	defer ts.Close()
+
+	original := OpenMeteoAPIEndpoint
+	OpenMeteoAPIEndpoint = ts.URL + "?"
+	defer func() { OpenMeteoAPIEndpoint = original }()
+
+	req := httptest.NewRequest(http.MethodGet, "/weather?lat=1&lon=2", nil)
+	rec := httptest.NewRecorder()
+	handleWeather(rec, req)
+
+	if rec.Result().StatusCode != http.StatusBadGateway {
+		t.Fatalf("Expected 502 when upstream fails, got %d", rec.Result().StatusCode)
+	}
+}
+
+func TestServeEmbeddedFile_NotFound(t *testing.T) {
+	rec := httptest.NewRecorder()
+	serveEmbeddedFile(rec, "static/nope.txt", "text/plain")
+	if rec.Result().StatusCode != http.StatusNotFound {
+		t.Fatalf("Expected 404 for missing embedded file, got %d", rec.Result().StatusCode)
+	}
+}
+
+func TestHandleSitemap_DefaultHTTPS(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "/sitemap.xml", nil)
+	req.Host = "example.com"
+	rec := httptest.NewRecorder()
+	handleSitemap(rec, req)
+	res := rec.Result()
+	defer res.Body.Close()
+	if res.StatusCode != http.StatusOK {
+		t.Fatalf("Expected 200, got %d", res.StatusCode)
+	}
+	body, _ := io.ReadAll(res.Body)
+	if !strings.Contains(string(body), "<loc>https://example.com/</loc>") {
+		t.Fatalf("Expected https scheme by default, body: %s", string(body))
+	}
+}
+
+func TestHandleSuggestions_UpstreamDecodeError(t *testing.T) {
+	setupCache()
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("not-json"))
+	}))
+	defer ts.Close()
+
+	original := OpenMeteoGeoAPIEndpoint
+	OpenMeteoGeoAPIEndpoint = ts.URL
+	defer func() { OpenMeteoGeoAPIEndpoint = original }()
+
+	req := httptest.NewRequest(http.MethodGet, "/suggestions?q=Paris", nil)
+	rec := httptest.NewRecorder()
+	handleSuggestions(rec, req)
+
+	if rec.Result().StatusCode != http.StatusInternalServerError {
+		t.Fatalf("Expected 500 on decode error, got %d", rec.Result().StatusCode)
+	}
+}
+
+func TestHandleSuggestions_UsesCacheSecondCall(t *testing.T) {
+	setupCache()
+	var calls int
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		calls++
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"results":[{"name":"Oslo","country":"Norway","latitude":59.9,"longitude":10.8}]}`))
+	}))
+	defer ts.Close()
+
+	original := OpenMeteoGeoAPIEndpoint
+	OpenMeteoGeoAPIEndpoint = ts.URL
+	defer func() { OpenMeteoGeoAPIEndpoint = original }()
+
+	req := httptest.NewRequest(http.MethodGet, "/suggestions?q=Oslo", nil)
+	rec := httptest.NewRecorder()
+	handleSuggestions(rec, req)
+	if rec.Result().StatusCode != http.StatusOK {
+		t.Fatalf("first call expected 200, got %d", rec.Result().StatusCode)
+	}
+
+	// Second call should be served from cache
+	req2 := httptest.NewRequest(http.MethodGet, "/suggestions?q=Oslo", nil)
+	rec2 := httptest.NewRecorder()
+	handleSuggestions(rec2, req2)
+	if rec2.Result().StatusCode != http.StatusOK {
+		t.Fatalf("second call expected 200, got %d", rec2.Result().StatusCode)
+	}
+	if calls != 1 {
+		t.Fatalf("expected upstream called once, got %d", calls)
+	}
+}
+
+func TestHandleReverseGeocoding_CacheSecondCall(t *testing.T) {
+	setupCache()
+	var calls int
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		calls++
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"results":[{"name":"Kyiv","country":"Ukraine","latitude":50.45,"longitude":30.52}]}`))
+	}))
+	defer ts.Close()
+
+	original := OpenMeteoGeoReverseAPIEndpoint
+	OpenMeteoGeoReverseAPIEndpoint = ts.URL
+	defer func() { OpenMeteoGeoReverseAPIEndpoint = original }()
+
+	path := "/reverse-geocoding?lat=50.4501&lon=30.5234"
+	req := httptest.NewRequest(http.MethodGet, path, nil)
+	rec := httptest.NewRecorder()
+	handleReverseGeocoding(rec, req)
+	if rec.Result().StatusCode != http.StatusOK {
+		t.Fatalf("first call expected 200, got %d", rec.Result().StatusCode)
+	}
+	// Make upstream fail; cached result should still be used
+	ts.Config.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		calls++
+		w.WriteHeader(http.StatusInternalServerError)
+	})
+	req2 := httptest.NewRequest(http.MethodGet, path, nil)
+	rec2 := httptest.NewRecorder()
+	handleReverseGeocoding(rec2, req2)
+	if rec2.Result().StatusCode != http.StatusOK {
+		t.Fatalf("second call expected 200, got %d", rec2.Result().StatusCode)
+	}
+	if calls < 1 {
+		t.Fatalf("expected upstream called at least once, got %d", calls)
+	}
+}
+
 func TestHandleSuggestions_NoQuery(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/suggestions", nil)
 	rec := httptest.NewRecorder()

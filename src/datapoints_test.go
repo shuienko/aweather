@@ -169,3 +169,11 @@ func TestPoints_TruncatesMismatchedArrays(t *testing.T) {
 		t.Fatalf("Expected 1 point after truncation, got %d", len(pts))
 	}
 }
+
+func TestPrintWithOptions_DefaultsNormalization(t *testing.T) {
+	points := DataPoints{{Time: time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)}}
+	out := points.PrintWithOptions(PrintOptions{TemperatureUnit: "", WindSpeedUnit: "", Use12Hour: false})
+	if !strings.Contains(out, "hour") || !strings.Contains(out, "wind") {
+		t.Fatalf("expected default headers present, got: %s", out)
+	}
+}
