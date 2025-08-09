@@ -92,6 +92,25 @@ func TestFetchSuggestions_Success(t *testing.T) {
 	}
 }
 
+func TestFetchReverseGeocoding_CacheAndNormalize(t *testing.T) {
+	setupCache()
+	// Pre-cache a value under normalized key reverse:52.520,13.405
+	key := "reverse:52.520,13.405"
+	payload, _ := json.Marshal(Suggestion{Name: "Cached Berlin", Country: "DE"})
+	if err := cache.Set(key, payload); err != nil {
+		t.Fatalf("failed to seed cache: %v", err)
+	}
+
+	// Values with more precision should normalize to the same key
+	got, err := fetchReverseGeocoding("52.52000", "13.40500")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if got == nil || got.Name != "Cached Berlin" {
+		t.Fatalf("expected cached suggestion, got: %+v", got)
+	}
+}
+
 func TestFetchSuggestions_Cache(t *testing.T) {
 	setupCache() // Initialize cache
 

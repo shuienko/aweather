@@ -1,6 +1,7 @@
 package main
 
 import (
+	"strings"
 	"testing"
 	"time"
 )
@@ -108,5 +109,63 @@ func TestPrint(t *testing.T) {
 	output := points.Print()
 	if output == "" {
 		t.Errorf("Expected output to contain forecast data, but got empty string")
+	}
+}
+
+func TestPrintWithOptions_UnitsAnd12Hour(t *testing.T) {
+	points := DataPoints{
+		{
+			Time:                  time.Date(2024, 1, 1, 13, 0, 0, 0, time.UTC),
+			Temperature2M:         10,
+			Temperature500hPa:     -20,
+			WindSpeed:             18, // km/h
+			WindGusts:             36, // km/h
+			LowClouds:             5,
+			MidClouds:             5,
+			HighClouds:            5,
+			GeopotentialHeight500: 5500,
+			Elevation:             100,
+			Lat:                   40,
+			Lon:                   -120,
+		},
+	}
+
+	out := points.setMoonIllumination().setSeeing().PrintWithOptions(PrintOptions{
+		TemperatureUnit: "f",
+		WindSpeedUnit:   "mph",
+		Use12Hour:       true,
+	})
+	if !strings.Contains(out, "1pm") {
+		t.Fatalf("Expected 12h time formatting with '1pm', got: %s", out)
+	}
+	if !strings.Contains(out, "50.0") && !strings.Contains(out, "46.0") { // temperature in F 10C->50F
+		t.Fatalf("Expected temperature in F, got: %s", out)
+	}
+}
+
+func TestPoints_TruncatesMismatchedArrays(t *testing.T) {
+	data := OpenMeteoAPIResponse{
+		Latitude:  1,
+		Longitude: 2,
+		Hourly: Hourly{
+			Time:                  []string{"2024-01-01T00:00", "2024-01-01T01:00"},
+			Temperature2M:         []float64{1}, // shorter
+			Temperature500hPa:     []float64{0},
+			Temperature850hPa:     []float64{0},
+			CloudCoverLow:         []int64{0},
+			CloudCoverMid:         []int64{0},
+			CloudCoverHigh:        []int64{0},
+			WindSpeed10M:          []float64{0},
+			WindGusts10M:          []float64{0},
+			WindSpeed200hPa:       []float64{0},
+			WindSpeed850hPa:       []float64{0},
+			GeopotentialHeight850: []float64{0},
+			GeopotentialHeight500: []float64{0},
+		},
+		Timezone: "UTC",
+	}
+	pts := data.Points()
+	if len(pts) != 1 {
+		t.Fatalf("Expected 1 point after truncation, got %d", len(pts))
 	}
 }
