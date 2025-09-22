@@ -1,4 +1,4 @@
-# [aweather](https://aweather.shnk.net/)
+# aweather
 
 <p align="center">
   <img src="https://github.com/shuienko/aweather/blob/main/src/static/favicon-192x192.png?raw=true" alt="Logo" width="192"/>
@@ -62,8 +62,6 @@ go test ./...
 - `GET /robots.txt`, `GET /favicon.ico`, `GET /static/*`
 
 ## Deployment
-This website is deployed to [aweather.shnk.net/](https://aweather.shnk.net/)
-
 ### Build image
 Build a Docker image from the repo root (the Dockerfile expects sources under `src/`).
 ```bash
