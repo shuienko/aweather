@@ -23,6 +23,9 @@ COPY --from=build /usr/local/bin/app /usr/local/bin/app
 # Copy tzdata
 COPY --from=build /usr/share/zoneinfo /usr/share/zoneinfo
 
+# Install CA certificates for outbound HTTPS (Open‑Meteo, Geocoding)
+RUN apk add --no-cache ca-certificates && update-ca-certificates
+
 # Create non-root user and switch
 RUN adduser -D -H -s /sbin/nologin appuser
 USER appuser
