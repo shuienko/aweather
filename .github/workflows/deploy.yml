@@ -3,64 +3,65 @@ name: Deploy
 on:
   push:
     branches:
-      - main
+    - main
 
-jobs:  
+jobs:
   deploy:
-    name: Deploy 
+    name: Deploy
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout the code
-      - name: Checkout
-        uses: actions/checkout@v4
+    # Checkout the code
+    - name: Checkout
+      uses: actions/checkout@v4
 
-      # Set up Google Cloud authentication
-      - name: Auth
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+    # Set up Google Cloud authentication
+    - name: Auth
+      uses: google-github-actions/auth@v2
+      with:
+        credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
 
-      # Configure Docker to use Google Cloud CLI
-      - name: Setup SDK
-        uses: google-github-actions/setup-gcloud@v2
-        with:
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
+    # Configure Docker to use Google Cloud CLI
+    - name: Setup SDK
+      uses: google-github-actions/setup-gcloud@v2
+      with:
+        project_id: ${{ secrets.GCP_PROJECT_ID }}
 
-      - name: Configure Docker Client
-        run: |
-          gcloud auth configure-docker europe-west1-docker.pkg.dev --quiet
+    - name: Configure Docker Client
+      run: |
+        gcloud auth configure-docker europe-west1-docker.pkg.dev --quiet
 
-      # Build the Docker image
-      - name: Build Docker Image
-        run: |
-          docker build -t europe-west1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/repo/aweather:latest .
+    # Build the Docker image
+    - name: Build Docker Image
+      run: |
+        docker build -t europe-west1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/repo/aweather:latest .
 
-      # Push the Docker image
-      - name: Push Docker Image
-        run: |
-          docker push europe-west1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/repo/aweather:latest
+    # Push the Docker image
+    - name: Push Docker Image
+      run: |
+        docker push europe-west1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/repo/aweather:latest
 
-      # Deploy
-      - name: Deploy to Cloud Run
-        run: |
-              gcloud run deploy aweather \
-                --image europe-west1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/repo/aweather:latest \
-                  --platform managed \
-                  --region europe-west1 \
-                  --port 8080 \
-                  --memory 256Mi \
-                  --cpu 1 \
-                  --timeout 30s \
-                  --min-instances 0 \
-                  --max-instances 1 \
-                  --tag latest \
-                  --allow-unauthenticated \
-                  --service-account ${{ secrets.GCP_SERVICE_USER }}
+    # Deploy
+    - name: Deploy to Cloud Run
+      run: |
+        gcloud run deploy aweather \
+          --image europe-west1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/repo/aweather:latest \
+            --platform managed \
+            --region europe-west1 \
+            --port 8080 \
+            --memory 256Mi \
+            --cpu 1 \
+            --timeout 30s \
+            --min-instances 0 \
+            --max-instances 1 \
+            --tag latest \
+            --set-env-vars AWEATHER_USER_AGENT='aweather.shnk.net 2.0' \
+            --allow-unauthenticated \
+            --service-account ${{ secrets.GCP_SERVICE_USER }}
 
-      # Send all traffic to the latest tag
-      - name: Switch traffic to latest
-        run: |
-              gcloud run services update-traffic aweather \
-                --region europe-west1 \
-                --to-latest
+    # Send all traffic to the latest tag
+    - name: Switch traffic to latest
+      run: |
+        gcloud run services update-traffic aweather \
+          --region europe-west1 \
+          --to-latest
