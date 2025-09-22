@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"os"
 	"strconv"
 	"time"
 )
@@ -69,6 +70,33 @@ type Suggestion struct {
 
 // shared HTTP client with reasonable timeout
 var httpClient = &http.Client{Timeout: 12 * time.Second}
+
+// userAgentRoundTripper injects a User-Agent header into all outbound requests made via httpClient
+type userAgentRoundTripper struct {
+	base      http.RoundTripper
+	userAgent string
+}
+
+func (t *userAgentRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	if t.userAgent != "" {
+		// Ensure a deterministic UA for all upstream calls
+		req.Header.Set("User-Agent", t.userAgent)
+	}
+	return t.base.RoundTrip(req)
+}
+
+func init() {
+	// Configure User-Agent from environment variable
+	ua := os.Getenv("AWEATHER_USER_AGENT")
+	if ua == "" {
+		ua = "aweather"
+	}
+	base := http.DefaultTransport
+	if httpClient.Transport != nil {
+		base = httpClient.Transport
+	}
+	httpClient.Transport = &userAgentRoundTripper{base: base, userAgent: ua}
+}
 
 // FetchData goes to OpenMeteoEndpoint, makes HTTPS request and stores result as OpenMeteoAPIResponse object
 // Returns error when upstream is unavailable or response cannot be parsed.
