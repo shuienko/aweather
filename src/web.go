@@ -99,6 +99,7 @@ func handleWeather(w http.ResponseWriter, r *http.Request) {
 
 	data := OpenMeteoAPIResponse{}
 	if err := data.FetchData(OpenMeteoAPIEndpoint, OpenMeteoAPIParams, float64ToString(latitude), float64ToString(longitude)); err != nil {
+		log.Printf("ERROR: fetching weather from Open‑Meteo: %v", err)
 		http.Error(w, "Upstream weather service unavailable", http.StatusBadGateway)
 		return
 	}
